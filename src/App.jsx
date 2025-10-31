@@ -1,17 +1,17 @@
-import { createBrowserRouter, RouterProvider } from 'react-router';
-import { AuthProvider } from './contexts/AuthProvider';
-import Header from './shared/Header';
-import Home from './pages/Home';
-import Dashboard from './pages/Dashboard';
-import Test from './pages/Test';
-import ProtectedRoute from './components/ProtectedRoute';
-import './App.css'
+import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthProvider";
+import Header from "./shared/Header";
+import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import Chat from "./pages/Chat";
+import ProtectedRoute from "./components/ProtectedRoute";
+import "./App.css";
 
 function AppLayout() {
   return (
     <div>
       <Header />
-      <Home />
+      <Outlet />
     </div>
   );
 }
@@ -20,28 +20,28 @@ function App() {
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <AppLayout />
+      element: <AppLayout />,
+      children: [
+        { index: true, element: <Home /> },
+        {
+          path: "dashboard",
+          element: (
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "chat",
+          element: (
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
+          ),
+        },
+        { path: "*", element: <div>Not Found</div> },
+      ],
     },
-    {
-      path: "/dashboard",
-      element: (
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      )
-    },
-    {
-      path: "/test",
-      element: (
-        <ProtectedRoute>
-          <Test />
-        </ProtectedRoute>
-      )
-    },
-    {
-      path: "*",
-      element: <div>Not Found</div>
-    }
   ]);
 
   return (
@@ -51,4 +51,4 @@ function App() {
   );
 }
 
-export default App
+export default App;
