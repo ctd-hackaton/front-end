@@ -1,0 +1,109 @@
+/* Chat UI styles - follows the existing CSS-module pattern */
+.chatContainer {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  margin-top: var(--header-height);
+  padding: var(--container-gap);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial;
+  height: calc(100vh - var(--header-height));
+  max-height: calc(100vh - var(--header-height));
+  box-sizing: border-box;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info {
+  font-size: 0.9rem;
+  color: var(--muted-text);
+}
+
+.messages {
+  background: var(--muted-surface);
+  border-radius: var(--radius-md);
+  padding: var(--container-gap);
+  /* Make messages area flexible and scrollable without causing body scroll */
+  flex: 1 1 auto;
+  min-height: 0; /* allow flex children to shrink properly */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.empty {
+  color: var(--muted-text);
+  text-align: center;
+  padding: var(--container-gap) 0;
+}
+
+.messageUser {
+  align-self: flex-end;
+  background: var(--color-secondary);
+  color: white;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-lg) var(--radius-lg) 2px var(--radius-lg);
+  max-width: 80%;
+  word-break: break-word;
+}
+
+.messageAssistant {
+  align-self: flex-start;
+  background: var(--text);
+  color: var(--bg);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) 2px;
+  max-width: 80%;
+  word-break: break-word;
+}
+
+.messageText {
+  white-space: pre-wrap;
+}
+
+.inputRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.input {
+  flex: 1;
+  resize: none;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--text);
+  min-height: 48px;
+  font-size: 0.95rem;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+}
+
+.sendBtn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.sendBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  color: var(--danger);
+  margin-top: 0.5rem;
+}

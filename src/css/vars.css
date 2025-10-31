@@ -1,0 +1,43 @@
+/* Global design tokens (CSS variables)
+   Purpose: centralize colors, spacing, sizes and common tokens for the app.
+*/
+:root {
+  /* Core colors */
+  --color-primary: #10b981; /* emerald-500 */
+  --color-primary-600: #059669;
+  --color-secondary: #0ea5e9; /* sky-500 */
+  --color-accent: #646cff; /* violet-ish used in index.css */
+
+  /* Background / text */
+  --bg: #0f172a; /* dark slate */
+  --surface: #0b1220; /* darker surface */
+  --muted-surface: #f8fafc; /* used for message bubble bg */
+  --text: #e6eef6; /* primary text on dark bg */
+  --muted-text: #9ca3af;
+
+  /* Semantic */
+  --success: #10b981;
+  --danger: #ef4444;
+
+  /* Layout tokens */
+  --header-height: 64px;
+  --max-width: 1100px;
+  --container-gap: 1rem;
+
+  /* Sizing & radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(2, 6, 23, 0.3);
+  --shadow-md: 0 6px 18px rgba(2, 6, 23, 0.45);
+}
+
+/* Light theme variables (optional) */
+[data-theme="light"] {
+  --bg: #ffffff;
+  --surface: #f8fafc;
+  --text: #0f172a;
+  --muted-text: #6b7280;
+}

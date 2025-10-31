@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router';
-import { useAuth } from '../hooks/useAuth';
-import SignInModal from '../features/SignInModal';
-import SignUpModal from '../features/SignUpModal';
-import styles from '../css/Header.module.css';
+import { useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router";
+import { useAuth } from "../hooks/useAuth";
+import SignInModal from "../features/SignInModal";
+import SignUpModal from "../features/SignUpModal";
+import styles from "../css/Header.module.css";
 
 function Header() {
   const { currentUser, logout } = useAuth();
@@ -14,71 +14,58 @@ function Header() {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/');
+      navigate("/");
     } catch (error) {
-      console.error('Failed to log out', error);
+      console.error("Failed to log out", error);
     }
   };
 
   const getName = (user) => {
-    if (!user) return 'User';
-    
-    return user.displayName || 
-           user.email || 
-           user.providerData?.[0]?.displayName ||
-           user.providerData?.[0]?.email ||
-           'User';
+    if (!user) return "User";
+
+    return (
+      user.displayName ||
+      user.email ||
+      user.providerData?.[0]?.displayName ||
+      user.providerData?.[0]?.email ||
+      "User"
+    );
   };
 
-  return (  
+  return (
     <header className={styles.mainHeader}>
-      
       <nav>
         {currentUser ? (
           <div className={styles.navLinks}>
-            <span>
-              Hello {getName(currentUser)}
-            </span>
-            <NavLink 
+            <span>Hello {getName(currentUser)}</span>
+            <NavLink
               to="/dashboard"
-              className={({ isActive }) => 
+              className={({ isActive }) =>
                 isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
               }
             >
               Dashboard
             </NavLink>
-            <NavLink 
-              to="/test"
-              className={({ isActive }) => 
+            <NavLink
+              to="/chat"
+              className={({ isActive }) =>
                 isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
               }
             >
-              Test
+              Chat
             </NavLink>
-            <button
-              onClick={handleLogout}              
-            >
-              Logout
-            </button>
+            <button onClick={handleLogout}>Logout</button>
           </div>
         ) : (
           <div>
-            <button
-              onClick={() => setShowSignIn(true)}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => setShowSignUp(true)}
-            >
-              Sign Up
-            </button>
+            <button onClick={() => setShowSignIn(true)}>Sign In</button>
+            <button onClick={() => setShowSignUp(true)}>Sign Up</button>
           </div>
         )}
       </nav>
 
       {showSignIn && (
-        <SignInModal 
+        <SignInModal
           onClose={() => setShowSignIn(false)}
           onSwitchToSignUp={() => {
             setShowSignIn(false);
@@ -88,7 +75,7 @@ function Header() {
       )}
 
       {showSignUp && (
-        <SignUpModal 
+        <SignUpModal
           onClose={() => setShowSignUp(false)}
           onSwitchToSignIn={() => {
             setShowSignUp(false);
