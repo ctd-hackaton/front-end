@@ -4,6 +4,7 @@ import Header from './shared/Header';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Test from './pages/Test';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css'
 
 function AppLayout() {
@@ -23,11 +24,19 @@ function App() {
     },
     {
       path: "/dashboard",
-      element: <Dashboard />
+      element: (
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      )
     },
     {
       path: "/test",
-      element: <Test />
+      element: (
+        <ProtectedRoute>
+          <Test />
+        </ProtectedRoute>
+      )
     },
     {
       path: "*",
