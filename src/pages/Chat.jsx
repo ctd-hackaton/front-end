@@ -182,7 +182,6 @@ function Chat() {
         <h1>Chat</h1>
         <div className={styles.info}>OpenAI-powered assistant</div>
       </div>
-
       <div className={styles.messages} role="log" aria-live="polite">
         {messages.length === 0 && (
           <div className={styles.empty}>No messages yet — say hello 👋</div>
@@ -201,7 +200,6 @@ function Chat() {
 
         <div ref={messagesEndRef} />
       </div>
-
       <div className={styles.inputRow}>
         <textarea
           ref={inputRef}
@@ -224,8 +222,7 @@ function Chat() {
           </button>
         </div>
       </div>
-
-      {error && <div className={styles.error}>{error}</div>}
+      <div className={styles.error}>{error || ""}</div>{" "}
     </div>
   );
 }
