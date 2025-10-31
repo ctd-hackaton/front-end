@@ -3,6 +3,9 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from '../hooks/useAuth';
 import GoogleIcon from '../assets/google-icon.svg';
 import styles from '../css/Modal.module.css';
+import { useNavigate } from 'react-router';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'; 
+import { db } from '../utils/firebase';
 
 export default function SignInModal({ onClose, onSwitchToSignUp }) {
   const [email, setEmail] = useState('');
@@ -10,6 +13,7 @@ export default function SignInModal({ onClose, onSwitchToSignUp }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, signInWithGoogle } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,6 +27,7 @@ export default function SignInModal({ onClose, onSwitchToSignUp }) {
       setLoading(true);
       await login(email, password);
       onClose();
+      navigate('/dashboard');
     } catch (error) {
       setError('Failed to sign in. Please check your credentials.');
       console.error('Sign in error:', error);
@@ -35,8 +40,45 @@ export default function SignInModal({ onClose, onSwitchToSignUp }) {
     try {
       setError('');
       setLoading(true);
-      await signInWithGoogle();
-      onClose();
+      const userCredential = await signInWithGoogle();
+      const user = userCredential.user;
+
+      //CHECK IF USER DOCUMENT EXISTS IN FIRESTORE
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
+        // First time Google sign-in - create user document
+        await setDoc(userDocRef, {
+          email: user.email,
+          displayName: user.displayName || user.email.split('@')[0] || 'User',
+          createdAt: serverTimestamp(),
+          personalData: {
+            age: null,
+            weightKg: null,
+            heightCm: null,
+            activityLevel: 'moderate'
+          },
+          preferences: {
+            dietType: 'none',
+            favoriteCuisine: [],
+            excludedIngredientRefs: [],
+            allergyIngredientRefs: []
+          },
+          goals: {
+            dailyCalorieTarget: 2000,
+            proteinGoalGrams: 150,
+            carbsGoalGrams: 200,
+            fatsGoalGrams: 65
+          }
+        });
+
+        onClose();
+        navigate('/profile'); // New user - complete profile
+      } else {
+        onClose();
+        navigate('/dashboard'); // Existing user - go to dashboard
+      }
     } catch (error) {
       setError('Failed to sign in with Google. Please try again.');
       console.error('Google sign in error:', error);
