@@ -11,7 +11,7 @@ function Chat() {
   const [messages, setMessages] = useState([]);
   const inputRef = useRef(null);
   const messagesEndRef = useRef(null);
-
+  console.log(response);
   const handleSend = async () => {
     if (!message.trim()) {
       setError("Please enter a message");
