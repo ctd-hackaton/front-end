@@ -1,32 +1,40 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
-const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
+require('dotenv').config();
+const {onCall} = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
+const OpenAI = require("openai");
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+exports.callOpenAI = onCall(async (request) => {
+  const { message } = request.data;
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+  if (!message) {
+    throw new Error("Message is required");
+  }
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+  try {
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "user",
+          content: message,
+        },
+      ],
+    });
+
+    const responseMessage = completion.choices[0]?.message?.content || "No response from OpenAI";
+
+    logger.info("OpenAI response received", { message });
+    
+    return {
+      success: true,
+      response: responseMessage,
+    };
+  } catch (error) {
+    logger.error("OpenAI error:", error);
+    throw new Error(`Failed to call OpenAI: ${error.message}`);
+  }
+});
