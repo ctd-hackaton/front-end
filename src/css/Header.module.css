@@ -1,0 +1,101 @@
+.mainHeader {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 1rem 2rem;
+  color: #fff;
+  height: 64px;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+.mainHeader h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.navLinks {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.navLinks button {
+  background: none;
+  border: 1px solid #fff;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.navLinks button:hover {
+  background: #fff;
+  color: #000;
+}
+
+.navLinks a {
+  color: #fff;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.navLinks a:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.navLink {
+  color: #fff;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.navLink:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.navLink.active {
+  background: rgba(87, 87, 87, 0.2);
+  font-weight: 600;
+}
+
+.navLinks span {
+  color: #fff;
+  font-size: 0.9rem;
+  display: block;
+}
+
+.mainHeader nav > div {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.mainHeader nav button {
+  background: none;
+  border: 1px solid #fff;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.mainHeader nav button:hover {
+  background: #fff;
+  color: #000;
+}
