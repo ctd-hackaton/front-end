@@ -3,7 +3,7 @@ import styles from "../css/Chat.module.css";
 import { functions } from "../utils/firebase";
 import { httpsCallable } from "firebase/functions";
 import { useAuth } from "../hooks/useAuth";
-import { saveMessageToDB, loadMessageHistory } from "../utils/db";
+import { saveMessageToDB, loadMessageHistory, saveMealPlan } from "../utils/db";
 
 function Chat() {
   const [message, setMessage] = useState("Create a meal plan for this week");
@@ -30,15 +30,21 @@ function Chat() {
 
       const callOpenAI = httpsCallable(functions, "callOpenAI");
       const result = await callOpenAI({ message });
-      const responseText = result.data.response;
 
-      // If it's a meal plan, save it to the database
+      // If it's a meal plan, format the response with all sections from the mealPlan data
+      let responseText = result.data.response;
       if (result.data.structured && result.data.mealPlan) {
-        const mealPlan = {
-          id: Date.now().toString(),
-          ...result.data.mealPlan,
-        };
-        await saveMealPlan(currentUser.uid, mealPlan);
+        const { text } = result.data.mealPlan;
+        responseText = `${
+          text.weekOverview
+        }\n\n--- Daily Overview ---\n${Object.entries(text.dailyDescription)
+          .map(
+            ([day, desc]) =>
+              `${day.charAt(0).toUpperCase() + day.slice(1)}: ${desc}`
+          )
+          .join("\n\n")}\n\n--- Nutrition Summary ---\n${
+          text.nutritionSummary
+        }`;
       }
 
       const assistantMsg = {
