@@ -42,6 +42,7 @@
   color: var(--muted-text);
   text-align: center;
   padding: var(--container-gap) 0;
+  white-space: pre-line;
 }
 
 .messageUser {
