@@ -1,0 +1,178 @@
+{
+  "text": {
+    "weekOverview": "This week's meal plan offers a delightful variety of dishes, ensuring a balance of nutrition and taste. From hearty breakfasts to satisfying dinners, each day is thoughtfully planned to keep you energized and healthy.",
+    "dailyDescription": {
+      "monday": "Start your week with a protein-packed breakfast, a light yet fulfilling lunch, and a comforting dinner to wind down.",
+      "tuesday": "Enjoy a refreshing breakfast, a vibrant salad for lunch, and a flavorful dinner to keep your taste buds excited.",
+      "wednesday": "Midweek meals include a wholesome breakfast, a hearty soup for lunch, and a balanced dinner.",
+      "thursday": "Kick off your day with a nutritious smoothie, a satisfying sandwich for lunch, and a delicious pasta dinner.",
+      "friday": "Indulge in a sweet breakfast treat, a light lunch, and a festive dinner to celebrate the end of the workweek.",
+      "saturday": "Relax with a leisurely breakfast, a picnic-style lunch, and a barbecue dinner.",
+      "sunday": "Conclude your week with a classic breakfast, a comforting lunch, and a family-style dinner."
+    },
+    "nutritionSummary": "The meal plan ensures a balanced intake of macronutrients, with an emphasis on fresh ingredients and diverse flavors."
+  },
+  "weekPlan": {
+    "monday": {
+      "breakfast": {
+        "name": "Greek Yogurt with Berries",
+        "description": "Creamy Greek yogurt topped with fresh berries and a drizzle of honey.",
+        "ingredients": [
+          {
+            "item": "Greek yogurt",
+            "amount": 1,
+            "unit": "cup",
+            "category": "Dairy"
+          },
+          {
+            "item": "Mixed berries",
+            "amount": 0.5,
+            "unit": "cup",
+            "category": "Fruits"
+          },
+          {
+            "item": "Honey",
+            "amount": 1,
+            "unit": "tbsp",
+            "category": "Sweeteners"
+          }
+        ],
+        "nutrition": { "calories": 200, "protein": 10, "carbs": 25, "fats": 5 }
+      },
+      "lunch": {
+        "name": "Grilled Chicken Salad",
+        "description": "A fresh salad with grilled chicken, mixed greens, and a light vinaigrette.",
+        "ingredients": [
+          {
+            "item": "Chicken breast",
+            "amount": 150,
+            "unit": "g",
+            "category": "Protein"
+          },
+          {
+            "item": "Mixed greens",
+            "amount": 2,
+            "unit": "cups",
+            "category": "Vegetables"
+          },
+          {
+            "item": "Vinaigrette",
+            "amount": 2,
+            "unit": "tbsp",
+            "category": "Condiments"
+          }
+        ],
+        "nutrition": { "calories": 300, "protein": 30, "carbs": 10, "fats": 15 }
+      },
+      "dinner": {
+        "name": "Baked Salmon with Quinoa",
+        "description": "Oven-baked salmon served with a side of quinoa and steamed broccoli.",
+        "ingredients": [
+          {
+            "item": "Salmon fillet",
+            "amount": 200,
+            "unit": "g",
+            "category": "Protein"
+          },
+          {
+            "item": "Quinoa",
+            "amount": 0.5,
+            "unit": "cup",
+            "category": "Grains"
+          },
+          {
+            "item": "Broccoli",
+            "amount": 1,
+            "unit": "cup",
+            "category": "Vegetables"
+          }
+        ],
+        "nutrition": { "calories": 400, "protein": 35, "carbs": 30, "fats": 15 }
+      }
+    },
+    "tuesday": {
+      "breakfast": {
+        "name": "Avocado Toast",
+        "description": "Whole-grain toast topped with mashed avocado and a sprinkle of chili flakes.",
+        "ingredients": [
+          {
+            "item": "Whole-grain bread",
+            "amount": 2,
+            "unit": "slices",
+            "category": "Grains"
+          },
+          {
+            "item": "Avocado",
+            "amount": 1,
+            "unit": "medium",
+            "category": "Fruits"
+          },
+          {
+            "item": "Chili flakes",
+            "amount": 0.5,
+            "unit": "tsp",
+            "category": "Spices"
+          }
+        ],
+        "nutrition": { "calories": 250, "protein": 6, "carbs": 30, "fats": 12 }
+      },
+      "lunch": {
+        "name": "Quinoa Salad",
+        "description": "A vibrant salad with quinoa, cherry tomatoes, cucumber, and feta cheese.",
+        "ingredients": [
+          {
+            "item": "Quinoa",
+            "amount": 1,
+            "unit": "cup",
+            "category": "Grains"
+          },
+          {
+            "item": "Cherry tomatoes",
+            "amount": 0.5,
+            "unit": "cup",
+            "category": "Vegetables"
+          },
+          {
+            "item": "Cucumber",
+            "amount": 0.5,
+            "unit": "cup",
+            "category": "Vegetables"
+          },
+          {
+            "item": "Feta cheese",
+            "amount": 0.25,
+            "unit": "cup",
+            "category": "Dairy"
+          }
+        ],
+        "nutrition": { "calories": 320, "protein": 12, "carbs": 40, "fats": 10 }
+      },
+      "dinner": {
+        "name": "Stir-Fried Tofu with Vegetables",
+        "description": "Crispy tofu stir-fried with bell peppers, carrots, and a savory sauce.",
+        "ingredients": [
+          { "item": "Tofu", "amount": 200, "unit": "g", "category": "Protein" },
+          {
+            "item": "Bell peppers",
+            "amount": 1,
+            "unit": "cup",
+            "category": "Vegetables"
+          },
+          {
+            "item": "Carrots",
+            "amount": 0.5,
+            "unit": "cup",
+            "category": "Vegetables"
+          },
+          {
+            "item": "Soy sauce",
+            "amount": 2,
+            "unit": "tbsp",
+            "category": "Condiments"
+          }
+        ],
+        "nutrition": { "calories": 350, "protein": 20, "carbs": 25, "fats": 15 }
+      }
+    }
+  }
+}
