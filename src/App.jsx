@@ -5,8 +5,10 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Profile from './pages/Profile';
+import Profile from "./pages/Profile";
+import { chatLoader } from "./loaders/chatLoader";
 import "./App.css";
+import SmallChat from "./pages/SmallChat";
 
 function AppLayout() {
   return (
@@ -39,6 +41,15 @@ function App() {
               <Chat />
             </ProtectedRoute>
           ),
+          loader: chatLoader,
+        },
+        {
+          path: "smallChat",
+          element: (
+            <ProtectedRoute>
+              <SmallChat />
+            </ProtectedRoute>
+          ),
         },
         {
           path: "/profile",
@@ -46,7 +57,7 @@ function App() {
             <ProtectedRoute>
               <Profile />
             </ProtectedRoute>
-              )
+          ),
         },
         { path: "*", element: <div>Not Found</div> },
       ],
