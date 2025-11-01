@@ -247,8 +247,9 @@ exports.streamOpenAI = onRequest(async (req, res) => {
 
     // Build system prompt based on whether we have meal context
     let systemPrompt = `You are Julie, a friendly sous-chef assistant.`;
+    const hasMealContext = mealContext && mealContext.mealData;
 
-    if (mealContext && mealContext.mealData) {
+    if (hasMealContext) {
       const { weekday, mealType, mealData, weekNumber } = mealContext;
       systemPrompt += ` You are helping the user modify their ${mealType} meal for ${weekday} (Week ${weekNumber}).
       
@@ -264,16 +265,32 @@ Current meal details:
         mealData.nutrition.fats
       }g fats
 
-When the user requests changes, provide practical advice and suggest modifications. If they want a complete replacement, 
-create a new meal that fits their preferences. Always maintain a similar nutritional profile unless they specifically request otherwise.
-Be concise, helpful, and encouraging.`;
+IMPORTANT: Always respond with a JSON object in this exact format:
+{
+  "message": "Your friendly natural language response",
+  "updatedMeal": {
+    "name": "meal name",
+    "description": "meal description",
+    "ingredients": [
+      {"item": "ingredient name", "amount": number, "unit": "unit", "category": "category"}
+    ],
+    "nutrition": {"calories": number, "protein": number, "carbs": number, "fats": number}
+  }
+}
+
+- If the user requests changes: Return the MODIFIED meal in updatedMeal
+- If the user is just asking questions: Return the CURRENT meal (unchanged) in updatedMeal
+- Never return null for updatedMeal
+
+Always maintain a similar nutritional profile unless they specifically request otherwise.
+Be concise, helpful, and encouraging in your message.`;
     } else {
       systemPrompt += ` You help users understand and modify recipes.
       Be concise, helpful, and encouraging. When users ask about simplifying steps or adjusting recipes,
       provide clear, practical advice.`;
     }
 
-    const stream = await openai.chat.completions.create({
+    const completionOptions = {
       model: "gpt-4o",
       messages: [
         {
@@ -286,19 +303,64 @@ Be concise, helpful, and encouraging.`;
         },
       ],
       temperature: 0.7,
-      max_tokens: 500,
-      stream: true,
-    });
+      max_tokens: 1000,
+    };
 
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || "";
-      if (content) {
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+    // For meal modifications, request structured JSON output (non-streaming)
+    if (hasMealContext) {
+      completionOptions.response_format = { type: "json_object" };
+
+      const completion = await openai.chat.completions.create(
+        completionOptions
+      );
+      const responseContent = completion.choices[0]?.message?.content || "{}";
+
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(responseContent);
+      } catch (error) {
+        parsedResponse = {
+          message: responseContent,
+          updatedMeal: null,
+        };
       }
-    }
 
-    res.write("data: [DONE]\n\n");
-    res.end();
+      // Stream the natural language message
+      const messageText = parsedResponse.message || "";
+      for (let i = 0; i < messageText.length; i += 3) {
+        const chunk = messageText.slice(i, i + 3);
+        res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+        // Small delay to simulate streaming
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+
+      // Send the structured data as a separate event
+      if (parsedResponse.updatedMeal) {
+        res.write(
+          `data: ${JSON.stringify({
+            type: "structured",
+            updatedMeal: parsedResponse.updatedMeal,
+          })}\n\n`
+        );
+      }
+
+      res.write("data: [DONE]\n\n");
+      res.end();
+    } else {
+      // For general chat, use streaming
+      completionOptions.stream = true;
+      const stream = await openai.chat.completions.create(completionOptions);
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) {
+          res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        }
+      }
+
+      res.write("data: [DONE]\n\n");
+      res.end();
+    }
 
     logger.info("OpenAI streaming response completed", { message });
   } catch (error) {
