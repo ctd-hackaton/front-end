@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../utils/firebase";
+import { useAuth } from "../hooks/useAuth";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/style.css";
 
@@ -10,41 +11,71 @@ function Dashboard() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selected, setSelected] = useState();
-
+  const [selected, setSelected] = useState(new Date());
+  const { currentUser } = useAuth();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchMealPlans = async () => {
       try {
         setLoading(true);
         setError(null);
-        const querySnapshot = await getDocs(collection(db, "test"));
+        const mealPlansRef = collection(db, "users", currentUser.uid, "mealPlans");
+        const querySnapshot = await getDocs(mealPlansRef);
         const documents = [];
         querySnapshot.forEach((doc) => {
           documents.push({
             id: doc.id,
-            name: doc.data().name || "",
-            color: doc.data().color || "",
+            ...doc.data(),
           });
         });
         setData(documents);
       } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Failed to fetch data");
+        console.error("Error fetching meal plans:", err);
+        setError("Failed to fetch meal plans");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    fetchMealPlans();
+  }, [currentUser]);
+
+  const range = (date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust sun
+    const monday = new Date(d);
+    monday.setDate(diff);
+    monday.setHours(0, 0, 0, 0);
+    
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    
+    return { start: monday, end: sunday };
+  };
+
+  const dateConvert = (timestamp) => {
+    if (timestamp.toDate) {
+      return timestamp.toDate();
+    }
+    if (timestamp.seconds) {
+      return new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
+    }
+    return null;
+  };
+
+  const filteredData = useMemo(() => {
+    const { start, end } = range(selected);
+    
+    return data.filter((mealPlan) => {
+      const selectedWeekDate = dateConvert(mealPlan.selectedWeek);
+      return selectedWeekDate >= start && selectedWeekDate <= end;
+    });
+  }, [data, selected]);
 
   return (
     <>
-      <div>
-        <h1>Dashboard</h1>
-      </div>
-
       <DayPicker 
         showOutsideDays 
         animate 
@@ -55,32 +86,27 @@ function Dashboard() {
         required
       />
 
-      {selected && <p>Selected {selected.toLocaleDateString()}</p>}
+      {selected && (
+        <p>
+          {(() => {
+            const { start, end } = range(selected);
+            return `Week: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+          })()}
+        </p>
+      )}
 
       <div>
-        <h2>DB Test collection</h2>
+        <h2>Meal Plans</h2>
         {loading && <p>Loading...</p>}
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p>Error</p>}
         {!loading && !error && (
           <div>
-            {data.length === 0 ? (
-              <p>No data found in test collection</p>
+            {filteredData.length === 0 ? (
+              <p>Nothing founded</p>
             ) : (
-              <ul style={{ listStyle: "none", padding: 0 }}>
-                {data.map((doc) => (
-                  <div key={doc.id}>
-                    <div>
-                      <strong>Document ID:</strong> {doc.id}
-                    </div>
-                    <div>
-                      <strong>Name:</strong> {doc.name || "N/A"}
-                    </div>
-                    <div>
-                      <strong>Color:</strong> {doc.color || "N/A"}
-                    </div>
-                  </div>
-                ))}
-              </ul>
+              filteredData.map((item) => (
+                <div key={item.id}>{JSON.stringify(item, null, 2)}</div>
+              ))
             )}
           </div>
         )}
