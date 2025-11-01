@@ -1,10 +1,10 @@
 require("dotenv").config();
-const {onCall, onRequest} = require("firebase-functions/v2/https");
+const { onCall, onRequest } = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const OpenAI = require("openai");
 
 exports.callOpenAI = onCall(async (request) => {
-  const {message} = request.data;
+  const { message } = request.data;
 
   if (!message) {
     throw new Error("Message is required");
@@ -15,9 +15,15 @@ exports.callOpenAI = onCall(async (request) => {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+    // First, check if this is a meal planning request
+    const intentCheck = await openai.chat.completions.create({
+      model: "gpt-4",
       messages: [
+        {
+          role: "system",
+          content:
+            "You are an intent classifier. Respond with 'true' only if the user is requesting a meal plan or asking about meal planning. Otherwise respond with 'false'.",
+        },
         {
           role: "user",
           content: message,
@@ -25,14 +31,68 @@ exports.callOpenAI = onCall(async (request) => {
       ],
     });
 
-    const responseMessage = completion.choices[0]?.message?.content ||
-      "No response from OpenAI";
+    const isMealPlanRequest = intentCheck.choices[0]?.message?.content
+      .toLowerCase()
+      .includes("true");
 
-    logger.info("OpenAI response received", {message});
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        {
+          role: "system",
+          content: isMealPlanRequest
+            ? `You are a meal planning assistant. When creating a meal plan, return a JSON object with the following structure:
+              {
+                "weekPlan": {
+                  "monday": { "breakfast": { "name": "", "recipe": "", "ingredients": [] }, "lunch": {...}, "dinner": {...} },
+                  "tuesday": {...}
+                },
+                "groceryList": [
+                  { "item": "", "category": "", "amount": "", "unit": "" }
+                ],
+                "nutritionSummary": {
+                  "averageCaloriesPerDay": number,
+                  "macroBreakdown": { "protein": "", "carbs": "", "fats": "" }
+                }
+              }`
+            : "You are a helpful nutrition and wellness assistant. Engage in natural conversation while providing accurate and helpful information about nutrition, health, and wellness.",
+        },
+        {
+          role: "user",
+          content: message,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
 
+    const responseContent = completion.choices[0]?.message?.content;
+
+    if (isMealPlanRequest) {
+      try {
+        const mealPlan = JSON.parse(responseContent);
+        logger.info("OpenAI meal plan received", { message });
+        return {
+          success: true,
+          response: responseContent,
+          structured: true,
+          mealPlan: mealPlan,
+        };
+      } catch (error) {
+        logger.error("Failed to parse meal plan JSON", error);
+        return {
+          success: true,
+          response:
+            "I encountered an error creating your meal plan. Could you please try asking again?",
+          structured: false,
+        };
+      }
+    }
+
+    logger.info("OpenAI conversation response received", { message });
     return {
       success: true,
-      response: responseMessage,
+      response: responseContent,
+      structured: false,
     };
   } catch (error) {
     logger.error("OpenAI error:", error);
@@ -40,10 +100,18 @@ exports.callOpenAI = onCall(async (request) => {
   }
 });
 
-exports.streamOpenAI = onRequest(async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+const setCorsHeaders = (req, res) => {
+  const origin = req.get("Origin") || "*";
+  res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (origin !== "*") {
+    res.setHeader("Vary", "Origin");
+  }
+};
+
+exports.streamOpenAI = onRequest(async (req, res) => {
+  setCorsHeaders(req, res);
 
   if (req.method === "OPTIONS") {
     res.status(204).end();
@@ -51,14 +119,14 @@ exports.streamOpenAI = onRequest(async (req, res) => {
   }
 
   if (req.method !== "POST") {
-    res.status(405).json({error: "Method not allowed"});
+    res.status(405).json({ error: "Method not allowed" });
     return;
   }
 
-  const {message} = req.body || {};
+  const { message } = req.body || {};
 
   if (!message || typeof message !== "string") {
-    res.status(400).json({error: "Message is required"});
+    res.status(400).json({ error: "Message is required" });
     return;
   }
 
@@ -66,9 +134,25 @@ exports.streamOpenAI = onRequest(async (req, res) => {
     apiKey: process.env.OPENAI_API_KEY,
   });
 
-  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
-  res.setHeader("Cache-Control", "no-cache, no-transform");
-  res.setHeader("Connection", "keep-alive");
+  const varyHeader = res.getHeader("Vary");
+  const responseHeaders = {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "Access-Control-Allow-Origin": res.getHeader("Access-Control-Allow-Origin"),
+    "Access-Control-Allow-Methods": res.getHeader(
+      "Access-Control-Allow-Methods"
+    ),
+    "Access-Control-Allow-Headers": res.getHeader(
+      "Access-Control-Allow-Headers"
+    ),
+  };
+
+  if (varyHeader) {
+    responseHeaders.Vary = varyHeader;
+  }
+
+  res.writeHead(200, responseHeaders);
 
   const sendEvent = (event, data) => {
     res.write(`event: ${event}\n`);
@@ -83,7 +167,7 @@ exports.streamOpenAI = onRequest(async (req, res) => {
 
   try {
     const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4",
       stream: true,
       temperature: 0.7,
       messages: [
@@ -105,12 +189,12 @@ exports.streamOpenAI = onRequest(async (req, res) => {
 
       const delta = part.choices[0]?.delta?.content;
       if (delta) {
-        sendEvent("data", {delta});
+        sendEvent("data", { delta });
       }
     }
 
     if (!streamAborted) {
-      sendEvent("end", {done: true});
+      sendEvent("end", { done: true });
       res.end();
     }
   } catch (error) {

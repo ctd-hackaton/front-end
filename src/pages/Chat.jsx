@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { streamOpenAIUrl } from "../utils/firebase";
 import styles from "../css/Chat.module.css";
+import { functions } from "../utils/firebase";
+import { httpsCallable } from "firebase/functions";
+import { useAuth } from "../hooks/useAuth";
+import { saveMessageToDB, loadMessageHistory } from "../utils/db";
 
 function Chat() {
   const [message, setMessage] = useState("Create a meal plan for this week");
@@ -9,158 +12,72 @@ function Chat() {
   const [messages, setMessages] = useState([]);
   const inputRef = useRef(null);
   const messagesEndRef = useRef(null);
-  const abortRef = useRef(null);
-
-  useEffect(() => {
-    return () => {
-      if (abortRef.current) {
-        abortRef.current.abort();
-      }
-    };
-  }, []);
+  const { currentUser } = useAuth();
 
   const handleSend = async () => {
-    const trimmed = message.trim();
-
-    if (!trimmed) {
+    if (!message.trim()) {
       setError("Please enter a message");
       return;
     }
 
-    if (!streamOpenAIUrl) {
-      setError("Streaming endpoint is not configured.");
-      return;
-    }
-
-    if (loading) {
-      return;
-    }
-
-    const userId =
-      typeof crypto !== "undefined" && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `${Date.now()}-user`;
-    const assistantId =
-      typeof crypto !== "undefined" && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `${Date.now()}-assistant`;
-    const userMsg = { id: userId, role: "user", text: trimmed };
-    const assistantMsg = { id: assistantId, role: "assistant", text: "" };
-
-    let reader;
-    let decoder;
-
     try {
       setLoading(true);
       setError(null);
-      setMessages((m) => [...m, userMsg, assistantMsg]);
-      setMessage("");
-
+      const userMsg = { id: Date.now(), role: "user", text: message };
+      setMessages((m) => [...m, userMsg]);
+      await saveMessageToDB(currentUser.uid, userMsg);
       if (inputRef.current) inputRef.current.focus();
 
-      const controller = new AbortController();
-      abortRef.current = controller;
+      const callOpenAI = httpsCallable(functions, "callOpenAI");
+      const result = await callOpenAI({ message });
+      const responseText = result.data.response;
 
-      const response = await fetch(streamOpenAIUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: trimmed }),
-        signal: controller.signal,
-      });
-
-      if (!response.ok || !response.body) {
-        throw new Error("Failed to connect to streaming endpoint");
+      // If it's a meal plan, save it to the database
+      if (result.data.structured && result.data.mealPlan) {
+        const mealPlan = {
+          id: Date.now().toString(),
+          ...result.data.mealPlan,
+        };
+        await saveMealPlan(currentUser.uid, mealPlan);
       }
 
-      reader = response.body.getReader();
-      decoder = new TextDecoder();
-      let buffer = "";
+      const assistantMsg = {
+        id: Date.now() + 1,
+        role: "assistant",
+        text: responseText,
+        structured: result.data.structured,
+        mealPlan: result.data.mealPlan,
+      };
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) {
-          buffer += decoder.decode();
-          break;
-        }
-
-        buffer += decoder.decode(value, { stream: true });
-        const events = buffer.split("\n\n");
-        buffer = events.pop() || "";
-
-        for (const rawEvent of events) {
-          const lines = rawEvent.split("\n").filter(Boolean);
-          let event = "data";
-          let dataPayload = "";
-
-          for (const line of lines) {
-            if (line.startsWith("event:")) {
-              event = line.slice(6).trim();
-            } else if (line.startsWith("data:")) {
-              dataPayload += line.slice(5).trimStart();
-            }
-          }
-
-          if (!dataPayload) continue;
-
-          if (event === "data" || event === "message") {
-            try {
-              const parsed = JSON.parse(dataPayload);
-              if (parsed.delta) {
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === assistantId
-                      ? { ...msg, text: msg.text + parsed.delta }
-                      : msg
-                  )
-                );
-              }
-            } catch (parseErr) {
-              console.error("Failed to parse stream chunk", parseErr);
-            }
-          } else if (event === "end") {
-            continue;
-          } else if (event === "error") {
-            try {
-              const parsed = JSON.parse(dataPayload);
-              throw new Error(parsed.message || "Streaming error");
-            } catch (err) {
-              throw err instanceof Error ? err : new Error("Streaming error");
-            }
-          }
-        }
-      }
-
-      reader.releaseLock();
-      reader = null;
+      setMessages((m) => [...m, assistantMsg]);
+      await saveMessageToDB(currentUser.uid, assistantMsg);
     } catch (err) {
-      if (err?.name === "AbortError") {
-        return;
-      }
       console.error("Error calling OpenAI function:", err);
       setError(err.message || "Failed to get response from OpenAI");
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === assistantId && !msg.text
-            ? { ...msg, text: "(failed to retrieve response)" }
-            : msg
-        )
-      );
     } finally {
-      if (abortRef.current) {
-        abortRef.current = null;
-      }
-      if (reader) {
-        try {
-          reader.cancel();
-        } catch (_) {
-          // ignore cancellation errors
-        }
-      }
       setLoading(false);
     }
   };
+
+  // Load message history when component mounts
+  useEffect(() => {
+    async function loadHistory() {
+      if (currentUser) {
+        try {
+          setLoading(true);
+          const history = await loadMessageHistory(currentUser.uid);
+          setMessages(history);
+        } catch (err) {
+          console.error("Error loading message history:", err);
+          setError("Failed to load message history");
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadHistory();
+  }, [currentUser]);
 
   // auto-scroll to bottom when messages update
   useEffect(() => {

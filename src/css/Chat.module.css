@@ -1,6 +1,7 @@
 /* Chat UI styles - follows the existing CSS-module pattern */
 .chatContainer {
-  max-width: var(--max-width);
+  width: 40vw;
+  max-width: 40vw;
   margin: 0 auto;
   padding: var(--container-gap);
   display: flex;
