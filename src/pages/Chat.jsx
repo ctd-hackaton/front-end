@@ -3,7 +3,7 @@ import styles from "../css/Chat.module.css";
 import { functions } from "../utils/firebase";
 import { httpsCallable } from "firebase/functions";
 import { useAuth } from "../hooks/useAuth";
-import { saveMessageToDB, loadMessageHistory, saveMealPlan } from "../utils/db";
+import { saveMessageToDB, loadMessageHistory } from "../utils/db";
 
 function Chat() {
   const [message, setMessage] = useState("Create a meal plan for this week");
