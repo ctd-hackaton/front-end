@@ -1,11 +1,17 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../utils/firebase";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/style.css";
+
+import styles from "../css/Dashboard.module.css";
 
 function Dashboard() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selected, setSelected] = useState();
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,6 +44,18 @@ function Dashboard() {
       <div>
         <h1>Dashboard</h1>
       </div>
+
+      <DayPicker 
+        showOutsideDays 
+        animate 
+        className={styles.dayPicker} 
+        mode="single" 
+        selected={selected} 
+        onSelect={setSelected} 
+        required
+      />
+
+      {selected && <p>Selected {selected.toLocaleDateString()}</p>}
 
       <div>
         <h2>DB Test collection</h2>
