@@ -56,12 +56,12 @@ function Header() {
           <div className={styles.navLinks}>
             <span>Hello {getName(currentUser)}</span>
             <NavLink
-              to="/"
+              to="/dashboard"
               className={({ isActive }) =>
                 isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
               }
             >
-              Dashboard
+              Meal Plan
             </NavLink>
             <NavLink
               to="/chat"

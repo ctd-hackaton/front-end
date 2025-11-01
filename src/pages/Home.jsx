@@ -9,8 +9,8 @@ function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [homeSettings, setHomeSettings] = useState({
-    chat: true,
     mealPlan: true,
+    shoppingList: true,
     statistics: true,
     savedRecipes: true
   });
@@ -47,34 +47,25 @@ function Home() {
     { id: 4, title: 'Beef Tacos', image: '/recipe4.jpg' }
   ];
 
+  const shoppingList = [
+    { name: 'Eggs', quantity: '12 pcs' },
+    { name: 'Milk', quantity: '1 L' },
+    { name: 'Chicken breast', quantity: '2 pcs' },
+    { name: 'Broccoli', quantity: '1 head' },
+    { name: 'Oats', quantity: '500 g' },
+    { name: 'Greek yogurt', quantity: '2 cups' },
+    { name: 'Berries', quantity: '200 g' },
+    { name: 'Olive oil', quantity: '250 ml' }
+  ];
+
   return (
     <div className={styles.homePage}>
       {/* Main Content */}
         <div className={styles.gridContainer}>
           
-          {/* Chat Section - Top Left */}
-          {homeSettings.chat && (
-            <div className={styles.chatSection} onClick={() => navigate('/chat')}>
-              <div className={styles.blurOverlay}>
-                <div className={styles.chatPreview}>
-                  <div className={styles.messagePreview}>
-                    <div className={styles.userMessage}>What should I cook for dinner?</div>
-                    <div className={styles.assistantMessage}>
-                      Based on your fridge inventory, I recommend...
-                    </div>
-                  </div>
-                  <div className={styles.clickPrompt}>
-                    <span className={styles.chatIcon}>💬</span>
-                    <span>Click to open Meal Planning Chat</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Meal Plan Section - Top Right */}
+          {/* Meal Plan Section - Top Left */}
           {homeSettings.mealPlan && (
-            <div className={styles.mealPlanSection} onClick={() => navigate('/meal-planner')}>
+            <div className={styles.mealPlanSection} onClick={() => navigate('/dashboard')}>
               <div className={styles.sectionHeader}>
                 <h3>📅 Today's Meal Plan</h3>
               </div>
@@ -90,6 +81,23 @@ function Home() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Shopping List - Top Right */}
+          {homeSettings.shoppingList && (
+            <div className={styles.shoppingListSection} onClick={() => navigate('/shopping-list')}>
+              <div className={styles.sectionHeader}>
+                <h3>🛒 Shopping List</h3>
+              </div>
+              <ul className={styles.shoppingList}>
+                {shoppingList.map((item, index) => (
+                  <li key={index} className={styles.shoppingItem}>
+                    <span className={styles.itemName}>{item.name}</span>
+                    <span className={styles.itemQuantity}>{item.quantity}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -150,23 +158,23 @@ function Home() {
               </p>
               <div className={styles.settingsList}>
                 <div className={styles.settingItem}>
-                  <span>Chat Preview</span>
-                  <label className={styles.switch}>
-                    <input
-                      type="checkbox"
-                      checked={homeSettings.chat}
-                      onChange={() => toggleSettingVisibility('chat')}
-                    />
-                    <span className={styles.slider}></span>
-                  </label>
-                </div>
-                <div className={styles.settingItem}>
                   <span>Meal Plan</span>
                   <label className={styles.switch}>
                     <input
                       type="checkbox"
                       checked={homeSettings.mealPlan}
                       onChange={() => toggleSettingVisibility('mealPlan')}
+                    />
+                    <span className={styles.slider}></span>
+                  </label>
+                </div>
+                <div className={styles.settingItem}>
+                  <span>Shopping List</span>
+                  <label className={styles.switch}>
+                    <input
+                      type="checkbox"
+                      checked={homeSettings.shoppingList}
+                      onChange={() => toggleSettingVisibility('shoppingList')}
                     />
                     <span className={styles.slider}></span>
                   </label>
