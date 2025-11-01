@@ -1,116 +1,66 @@
-import { useState, useRef, useEffect } from "react";
-import { httpsCallable } from "firebase/functions";
+import { useCallback, useMemo } from "react";
+import { useLoaderData } from "react-router-dom";
 import { functions } from "../utils/firebase";
-import styles from "../css/Chat.module.css";
+import { httpsCallable } from "firebase/functions";
+import { useAuth } from "../hooks/useAuth";
+import { saveMessageToDB } from "../utils/db";
+import ChatUI from "../components/ChatUI";
 
 function Chat() {
-  const [message, setMessage] = useState("How are you doing, ChatGPT");
-  const [response, setResponse] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const inputRef = useRef(null);
-  const messagesEndRef = useRef(null);
-  console.log(response);
-  const handleSend = async () => {
-    if (!message.trim()) {
-      setError("Please enter a message");
-      return;
-    }
+  const { currentUser } = useAuth();
+  const { messages } = useLoaderData();
 
-    try {
-      setLoading(true);
-      setError(null);
-      // add user message to the list
-      const userMsg = { id: Date.now(), role: "user", text: message };
-      setMessages((m) => [...m, userMsg]);
-      setResponse("");
-      // focus input
-      if (inputRef.current) inputRef.current.focus();
+  const initialMessages = useMemo(() => messages, [messages]);
 
+  const handleSend = useCallback(
+    async (messageText, userMsg) => {
       const callOpenAI = httpsCallable(functions, "callOpenAI");
-      const result = await callOpenAI({ message });
+      const result = await callOpenAI({ message: messageText });
+
+      await saveMessageToDB(currentUser.uid, userMsg);
+
+      let responseText = result.data.response;
+      if (result.data.structured && result.data.mealPlan) {
+        const { text } = result.data.mealPlan;
+        responseText = `${
+          text.weekOverview
+        }\n\n--- Daily Overview ---\n${Object.entries(text.dailyDescription)
+          .map(
+            ([day, desc]) =>
+              `${day.charAt(0).toUpperCase() + day.slice(1)}: ${desc}`
+          )
+          .join("\n\n")}\n\n--- Nutrition Summary ---\n${
+          text.nutritionSummary
+        }`;
+      }
 
       const assistantMsg = {
         id: Date.now() + 1,
         role: "assistant",
-        text: result.data.response || "(no response)",
+        text: responseText,
+        structured: result.data.structured,
+        mealPlan: result.data.mealPlan,
       };
 
-      setMessages((m) => [...m, assistantMsg]);
-    } catch (err) {
-      console.error("Error calling OpenAI function:", err);
-      setError(err.message || "Failed to get response from OpenAI");
-    } finally {
-      setLoading(false);
-    }
-  };
+      await saveMessageToDB(currentUser.uid, assistantMsg);
 
-  // auto-scroll to bottom when messages update
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, loading]);
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
+      return assistantMsg;
+    },
+    [currentUser]
+  );
 
   return (
-    <div className={styles.chatContainer}>
-      <div className={styles.headerRow}>
-        <h1>Chat</h1>
-        <div className={styles.info}>OpenAI-powered assistant</div>
-      </div>
-
-      <div className={styles.messages} role="log" aria-live="polite">
-        {messages.length === 0 && (
-          <div className={styles.empty}>No messages yet — say hello 👋</div>
-        )}
-
-        {messages.map((m) => (
-          <div
-            key={m.id}
-            className={
-              m.role === "user" ? styles.messageUser : styles.messageAssistant
-            }
-          >
-            <div className={styles.messageText}>{m.text}</div>
-          </div>
-        ))}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      <div className={styles.inputRow}>
-        <textarea
-          ref={inputRef}
-          className={styles.input}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type a message and press Enter to send"
-          rows={2}
-          disabled={loading}
-        />
-
-        <div className={styles.controls}>
-          <button
-            className={styles.sendBtn}
-            onClick={handleSend}
-            disabled={loading}
-          >
-            {loading ? "Sending..." : "Send"}
-          </button>
-        </div>
-      </div>
-
-      {error && <div className={styles.error}>{error}</div>}
-    </div>
+    <ChatUI
+      onSend={handleSend}
+      initialMessages={initialMessages}
+      title="Chef Jul"
+      info="Meal Planner assistant"
+      placeholder="Create a meal plan"
+      welcomeMsg={`Hey there! I'm Chef Jul — your personal meal-planning assistant.
+I can help you create delicious, balanced meals for the week or answer any culinary questions you might have.
+Try asking something like:
+"Create a low-carb Italian meal plan for this week." 🍝`}
+    />
   );
 }
 
