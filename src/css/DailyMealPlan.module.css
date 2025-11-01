@@ -1,0 +1,76 @@
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: var(--container-gap);
+  max-width: 600px;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--container-gap);
+  padding-bottom: var(--container-gap);
+}
+
+.title {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.mealList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.mealRow {
+  display: grid;
+  grid-template-columns: 120px 1fr 100px;
+  align-items: center;
+  padding: var(--container-gap) 0;
+  border-bottom: 1px solid var(--muted-text);
+  font-size: var(--font-size-sm);
+}
+
+.mealRow:last-child {
+  border-bottom: none;
+}
+
+.mealType {
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  letter-spacing: 0.5px;
+}
+
+.mealContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--container-gap) / 2;
+}
+
+.mealDescription {
+  color: var(--text);
+  margin: 0;
+}
+
+.mealTime {
+  color: var(--muted-text);
+  margin: 0;
+}
+
+.calories {
+  color: var(--text);
+  text-align: right;
+}
+
+.noMeals {
+  text-align: center;
+  color: var(--muted-text);
+  padding: var(--container-gap);
+}

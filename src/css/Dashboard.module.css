@@ -1,4 +1,14 @@
+.mainDash {
+  display: flex;
+  flex-direction: row;
+  align-items: top;
+  justify-content: center;
+  gap: 4rem;
+}
+
 .dayPicker {
   --rdp-accent-color: var(--color-primary);
   --rdp-accent-background-color: var(--color-primary-600);
+  --rdp-weekday-opacity: 0.5;
+  --rdp-week_number-opacity: 0.2;
 }
