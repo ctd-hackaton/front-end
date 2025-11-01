@@ -5,13 +5,33 @@ import { useAuth } from "../hooks/useAuth";
 import styles from "../css/Profile.module.css";
 import { useNavigate } from "react-router-dom";
 
+//convertation
+const lbToKg = (lb) => lb * 0.45359237;
+const kgToLb = (kg) => kg / 0.45359237;
+const cmToFeetInches = (cm) => {
+  const totalInches = cm / 2.54;
+  const feet = Math.floor(totalInches / 12);
+  const inches = Math.round(totalInches % 12);
+  return { feet, inches };
+};
+const feetInchesToCm = (feet, inches) => (feet * 12 + inches) * 2.54;
+
 export default function Profile() {
   const navigate = useNavigate(); 
   const { currentUser } = useAuth();
+
+  const [units, setUnits] = useState({
+    weight: "lb", 
+    height: "ft", 
+  });
+
   const [formData, setFormData] = useState({
     age: "",
     weightKg: "",
     heightCm: "",
+    weightDisplay: "",
+    heightFeet: "",
+    heightInches: "",
     activityLevel: "light",
     dietType: "none",
     favoriteCuisine: [],
@@ -21,8 +41,6 @@ export default function Profile() {
     proteinGoalGrams: "",
     carbsGoalGrams: "",
     fatsGoalGrams: "",
-    maxIngredients: "",
-    maxTime: "",
   });
 
   // Подгружаем существующие данные
@@ -33,10 +51,28 @@ export default function Profile() {
       const docSnap = await getDoc(userRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
+        const weightKg = data.personalData?.weightKg || "";
+        const heightCm = data.personalData?.heightCm || "";
+
+        let weightDisplay = "";
+        let heightFeet = "";
+        let heightInches = "";
+
+        if (weightKg !== "") {
+          weightDisplay = kgToLb(Number(weightKg)).toFixed(1);
+        }
+        if (heightCm !== "") {
+          const { feet, inches } = cmToFeetInches(Number(heightCm));
+          heightFeet = feet;
+          heightInches = inches;
+        }
         setFormData({
           age: data.personalData?.age || "",
-          weightKg: data.personalData?.weightKg || "",
-          heightCm: data.personalData?.heightCm || "",
+          weightKg,
+          heightCm,
+          weightDisplay,
+          heightFeet,
+          heightInches,
           activityLevel: data.personalData?.activityLevel || "light",
           dietType: data.preferences?.dietType || "none",
           favoriteCuisine: data.preferences?.favoriteCuisine || [],
@@ -52,9 +88,87 @@ export default function Profile() {
     fetchData();
   }, [currentUser]);
 
+  const handleUnitChange = (type, value) => {
+    setUnits((prev) => ({ ...prev, [type]: value }));
+
+    if (type === "weight") {
+      if (value === "kg") {
+        setFormData((prev) => ({
+          ...prev,
+          weightDisplay: prev.weightKg,
+        }));
+      } else {
+        const lb = prev.weightKg ? kgToLb(Number(prev.weightKg)).toFixed(1) : "";
+        setFormData((prev) => ({
+          ...prev,
+          weightDisplay: lb,
+        }));
+      }
+    }
+
+    if (type === "height") {
+      if (value === "cm") {
+        setFormData((prev) => ({
+          ...prev,
+          heightFeet: "",
+          heightInches: "",
+        }));
+      } else {
+        if (prev.heightCm) {
+          const { feet, inches } = cmToFeetInches(Number(prev.heightCm));
+          setFormData((prev) => ({
+            ...prev,
+            heightFeet: feet,
+            heightInches: inches,
+          }));
+        } else {
+          setFormData((prev) => ({
+            ...prev,
+            heightFeet: "",
+            heightInches: "",
+          }));
+        }
+      }
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "weightDisplay") {
+      const numValue = value === "" ? "" : Number(value);
+      if (units.weight === "kg") {
+        setFormData((prev) => ({
+          ...prev,
+          weightKg: numValue,
+        }));
+      } else {
+        // lb → kg
+        const kg = value === "" ? "" : lbToKg(numValue);
+        setFormData((prev) => ({
+          ...prev,
+          weightKg: kg,
+        }));
+      }
+    }
+
+    if (name === "heightFeet" || name === "heightInches") {
+      const feet = name === "heightFeet" ? (value === "" ? 0 : Number(value)) : Number(prev.heightFeet || 0);
+      const inches = name === "heightInches" ? (value === "" ? 0 : Number(value)) : Number(prev.heightInches || 0);
+      const cm = feetInchesToCm(feet, inches);
+      setFormData((prev) => ({
+        ...prev,
+        heightCm: cm > 0 ? cm : "",
+      }));
+    }
+
+    if (name === "heightCm") {
+      const numValue = value === "" ? "" : Number(value);
+      setFormData((prev) => ({
+        ...prev,
+        heightCm: numValue,
+      }));
+    }
   };
 
   const handleCheckbox = (cuisine) => {
@@ -69,16 +183,19 @@ export default function Profile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!currentUser) return alert("Please log in first");
-
+    if (formData.weightKg < 0 || formData.heightCm < 0 || formData.age < 0) {
+      alert("Please enter valid non-negative numbers.");
+      return;
+    }
     const userRef = doc(db, "users", currentUser.uid);
     const payload = {
       email: currentUser.email,
       displayName: currentUser.displayName || "User",
       createdAt: Timestamp.now(),
       personalData: {
-        age: Number(formData.age),
-        weightKg: Number(formData.weightKg),
-        heightCm: Number(formData.heightCm),
+        age: formData.age ? Number(formData.age) : null,
+        weightKg: formData.weightKg ? Number(formData.weightKg) : null,
+        heightCm: formData.heightCm ? Number(formData.heightCm) : null,
         activityLevel: formData.activityLevel,
       },
       preferences: {
@@ -88,8 +205,6 @@ export default function Profile() {
           ? formData.excludedIngredients.split(",").map((i) => i.trim())
           : [],
         allergyIngredientRefs: formData.allergies,
-        maxIngredients: formData.maxIngredients ? Number(formData.maxIngredients) : null,
-        maxTime: formData.maxTime ? Number(formData.maxTime) : null,
       },
       goals: {
         dailyCalorieTarget: Number(formData.dailyCalorieTarget),
@@ -119,14 +234,85 @@ export default function Profile() {
             Age:
             <input type="number" name="age" value={formData.age} onChange={handleChange} />
           </label>
-          <label>
-            Weight (kg):
-            <input type="number" name="weightKg" value={formData.weightKg} onChange={handleChange} />
-          </label>
-          <label>
-            Height (cm):
-            <input type="number" name="heightCm" value={formData.heightCm} onChange={handleChange} />
-          </label>
+          <div className={styles.unitGroup}>
+            <span>Weight:</span>
+            <div className={styles.unitToggle}>
+              <button
+                type="button"
+                className={units.weight === "lb" ? styles.activeUnit : ""}
+                onClick={() => handleUnitChange("weight", "lb")}
+              >
+                lb
+              </button>
+              <button
+                type="button"
+                className={units.weight === "kg" ? styles.activeUnit : ""}
+                onClick={() => handleUnitChange("weight", "kg")}
+              >
+                kg
+              </button>
+            </div>
+            <input
+              type="number"
+              name="weightDisplay"
+              min="0"
+              step={units.weight === "lb" ? "0.1" : "0.01"}
+              value={formData.weightDisplay}
+              onChange={handleChange}
+              placeholder={`Enter weight in ${units.weight}`}
+            />
+          </div>
+          <div className={styles.unitGroup}>
+            <span>Height:</span>
+            <div className={styles.unitToggle}>
+              <button
+                type="button"
+                className={units.height === "ft" ? styles.activeUnit : ""}
+                onClick={() => handleUnitChange("height", "ft")}
+              >
+                ft/in
+              </button>
+              <button
+                type="button"
+                className={units.height === "cm" ? styles.activeUnit : ""}
+                onClick={() => handleUnitChange("height", "cm")}
+              >
+                cm
+              </button>
+            </div>
+            {units.height === "ft" ? (
+              <div className={styles.heightInputs}>
+                <input
+                  type="number"
+                  name="heightFeet"
+                  min="0"
+                  max="9"
+                  value={formData.heightFeet}
+                  onChange={handleChange}
+                  placeholder="ft"
+                />
+                <input
+                  type="number"
+                  name="heightInches"
+                  min="0"
+                  max="11"
+                  value={formData.heightInches}
+                  onChange={handleChange}
+                  placeholder="in"
+                />
+              </div>
+            ) : (
+              <input
+                type="number"
+                name="heightCm"
+                min="0"
+                value={formData.heightCm}
+                onChange={handleChange}
+                placeholder="Enter height in cm"
+              />
+            )}
+          </div>
+
           <label>
             Activity level:
             <select name="activityLevel" value={formData.activityLevel} onChange={handleChange}>
@@ -202,31 +388,7 @@ export default function Profile() {
                 {allergy}
               </label>
             )
-          )}
-          <label>
-            Maximum number of ingredients per recipe:
-            <input
-              type="number"
-              name="maxIngredients"
-              min={1}
-              max={20}
-              value={formData.maxIngredients || ""}
-              onChange={handleChange}
-              placeholder="e.g. 5"
-            />
-          </label>
-          <label>
-            Maximum number of time per recipe(minutes):
-            <input
-              type="number"
-              name="maxTime"
-              min={1}
-              max={99}
-              value={formData.maxTime || ""}
-              onChange={handleChange}
-              placeholder="e.g. 30 minutes"
-            />
-          </label>
+          )}          
         </section>
 
         <section className={styles.section}>
