@@ -218,111 +218,68 @@ Return ONLY the JSON object with all 7 days completed.`
   }
 });
 
-const setCorsHeaders = (req, res) => {
-  const origin = req.get("Origin") || "*";
-  res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (origin !== "*") {
-    res.setHeader("Vary", "Origin");
-  }
-};
-
 exports.streamOpenAI = onRequest(async (req, res) => {
-  setCorsHeaders(req, res);
+  // Handle CORS
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
-    res.status(204).end();
+    res.status(204).send("");
     return;
   }
 
-  if (req.method !== "POST") {
-    res.status(405).json({ error: "Method not allowed" });
-    return;
-  }
-
-  const { message } = req.body || {};
+  const { message } = req.body;
 
   if (!message || typeof message !== "string") {
     res.status(400).json({ error: "Message is required" });
     return;
   }
 
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-
-  const varyHeader = res.getHeader("Vary");
-  const responseHeaders = {
-    "Content-Type": "text/event-stream; charset=utf-8",
-    "Cache-Control": "no-cache, no-transform",
-    Connection: "keep-alive",
-    "Access-Control-Allow-Origin": res.getHeader("Access-Control-Allow-Origin"),
-    "Access-Control-Allow-Methods": res.getHeader(
-      "Access-Control-Allow-Methods"
-    ),
-    "Access-Control-Allow-Headers": res.getHeader(
-      "Access-Control-Allow-Headers"
-    ),
-  };
-
-  if (varyHeader) {
-    responseHeaders.Vary = varyHeader;
-  }
-
-  res.writeHead(200, responseHeaders);
-
-  const sendEvent = (event, data) => {
-    res.write(`event: ${event}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
-
-  let streamAborted = false;
-
-  req.on("close", () => {
-    streamAborted = true;
-  });
-
   try {
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    // Set headers for SSE
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
     const stream = await openai.chat.completions.create({
-      model: "gpt-4",
-      stream: true,
-      temperature: 0.7,
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: "You are a helpful assistant.",
+          content: `You are Julie, a friendly sous-chef assistant. You help users understand and modify recipes.
+            Be concise, helpful, and encouraging. When users ask about simplifying steps or adjusting recipes,
+            provide clear, practical advice.`,
         },
         {
           role: "user",
           content: message,
         },
       ],
+      temperature: 0.7,
+      max_tokens: 500,
+      stream: true,
     });
 
-    for await (const part of stream) {
-      if (streamAborted) {
-        break;
-      }
-
-      const delta = part.choices[0]?.delta?.content;
-      if (delta) {
-        sendEvent("data", { delta });
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || "";
+      if (content) {
+        res.write(`data: ${JSON.stringify({ content })}\n\n`);
       }
     }
 
-    if (!streamAborted) {
-      sendEvent("end", { done: true });
-      res.end();
-    }
+    res.write("data: [DONE]\n\n");
+    res.end();
+
+    logger.info("OpenAI streaming response completed", { message });
   } catch (error) {
     logger.error("OpenAI streaming error:", error);
-    if (!streamAborted) {
-      res.statusCode = 500;
-      sendEvent("error", {
-        message: error.message || "Failed to stream response",
-      });
-      res.end();
+    if (!res.headersSent) {
+      res.status(500).json({ error: error.message || "unknown error" });
     }
   }
 });
