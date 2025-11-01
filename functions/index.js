@@ -12,7 +12,6 @@ if (!admin.apps || !admin.apps.length) {
 
 const dbAdmin = admin.firestore();
 
-// Helper function to get ISO week number
 function getWeekNumber(date) {
   const d = new Date(
     Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
@@ -229,7 +228,7 @@ exports.streamOpenAI = onRequest(async (req, res) => {
     return;
   }
 
-  const { message } = req.body;
+  const { message, mealContext } = req.body;
 
   if (!message || typeof message !== "string") {
     res.status(400).json({ error: "Message is required" });
@@ -246,14 +245,40 @@ exports.streamOpenAI = onRequest(async (req, res) => {
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
+    // Build system prompt based on whether we have meal context
+    let systemPrompt = `You are Julie, a friendly sous-chef assistant.`;
+
+    if (mealContext && mealContext.mealData) {
+      const { weekday, mealType, mealData, weekNumber } = mealContext;
+      systemPrompt += ` You are helping the user modify their ${mealType} meal for ${weekday} (Week ${weekNumber}).
+      
+Current meal details:
+- Name: ${mealData.name}
+- Description: ${mealData.description}
+- Ingredients: ${mealData.ingredients
+        .map((i) => `${i.amount} ${i.unit} ${i.item}`)
+        .join(", ")}
+- Nutrition: ${mealData.nutrition.calories} cal, ${
+        mealData.nutrition.protein
+      }g protein, ${mealData.nutrition.carbs}g carbs, ${
+        mealData.nutrition.fats
+      }g fats
+
+When the user requests changes, provide practical advice and suggest modifications. If they want a complete replacement, 
+create a new meal that fits their preferences. Always maintain a similar nutritional profile unless they specifically request otherwise.
+Be concise, helpful, and encouraging.`;
+    } else {
+      systemPrompt += ` You help users understand and modify recipes.
+      Be concise, helpful, and encouraging. When users ask about simplifying steps or adjusting recipes,
+      provide clear, practical advice.`;
+    }
+
     const stream = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are Julie, a friendly sous-chef assistant. You help users understand and modify recipes.
-            Be concise, helpful, and encouraging. When users ask about simplifying steps or adjusting recipes,
-            provide clear, practical advice.`,
+          content: systemPrompt,
         },
         {
           role: "user",
