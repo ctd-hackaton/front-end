@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { streamOpenAIUrl } from "../utils/firebase";
 import ChatUI from "../components/ChatUI";
 
@@ -35,15 +35,18 @@ import ChatUI from "../components/ChatUI";
 }
  */
 function SmallChat({ week, day, type, meal }) {
-  const mealContext =
-    week && day && type && meal
-      ? {
-          weekNumber: week,
-          weekday: day,
-          mealType: type,
-          mealData: meal,
-        }
-      : null;
+  const mealContext = useMemo(
+    () =>
+      week && day && type && meal
+        ? {
+            weekNumber: week,
+            weekday: day,
+            mealType: type,
+            mealData: meal,
+          }
+        : null,
+    [week, day, type, meal]
+  );
 
   const handleSend = useCallback(
     async (messageText, _, onMessageUpdate) => {
