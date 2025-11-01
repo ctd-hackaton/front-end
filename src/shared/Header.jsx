@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect  } from "react";
 import { Link, NavLink, useNavigate } from "react-router";
 import { useAuth } from "../hooks/useAuth";
 import SignInModal from "../features/SignInModal";
 import SignUpModal from "../features/SignUpModal";
 import styles from "../css/Header.module.css";
 import { useFirestoreDoc } from "../hooks/useFirestoreDoc";
+import userIcon from "../assets/user.svg"
 
 function Header() {
   const { currentUser, logout } = useAuth();
@@ -13,6 +14,18 @@ function Header() {
   const navigate = useNavigate();
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -30,6 +43,10 @@ function Header() {
     if (currentUser?.displayName) return currentUser.displayName;
     if (currentUser?.email) return currentUser.email;
     return "User";
+  };
+
+  const getAvatar = () => {
+    return userDoc?.photoURL || currentUser?.photoURL || userIcon;
   };
 
   return (
@@ -54,9 +71,44 @@ function Header() {
             >
               Chat
             </NavLink>
-            <button onClick={handleLogout}>Logout</button>
+            <div className={styles.userMenu} ref={menuRef}>
+              <img
+                src={getAvatar()}
+                alt="User"
+                className={styles.userIcon}
+                onClick={() => setMenuOpen((prev) => !prev)}
+              />
+              {menuOpen && (
+                <div className={styles.dropdown}>
+                  <div className={styles.dropdownHeader}>
+                    Hello, {getName()}
+                  </div>
+                  <div
+                    className={styles.dropdownItem}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      navigate("/userinfo");
+                    }}
+                  >
+                    View Profile
+                  </div>
+                  <div
+                    className={styles.dropdownItem}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      navigate("/profile");
+                    }}
+                  >
+                    Change Account Preferences
+                  </div>
+                  <div className={styles.dropdownItem} onClick={handleLogout}>
+                    Logout
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        ) : (
+        )  : (
           <div>
             <button onClick={() => setShowSignIn(true)}>Sign In</button>
             <button onClick={() => setShowSignUp(true)}>Sign Up</button>

@@ -7,6 +7,7 @@ import Chat from "./pages/Chat";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from './pages/Profile';
 import "./App.css";
+import Userinfo from "./pages/Userinfo";
 
 function AppLayout() {
   return (
@@ -47,6 +48,14 @@ function App() {
               <Profile />
             </ProtectedRoute>
               )
+        },
+        {
+          path: "userinfo",
+          element: (
+            <ProtectedRoute>
+              <Userinfo />
+            </ProtectedRoute>
+          ),
         },
         { path: "*", element: <div>Not Found</div> },
       ],

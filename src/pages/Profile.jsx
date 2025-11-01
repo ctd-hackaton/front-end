@@ -3,8 +3,10 @@ import { doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../hooks/useAuth";
 import styles from "../css/Profile.module.css";
+import { useNavigate } from "react-router-dom";
 
 export default function Profile() {
+  const navigate = useNavigate(); 
   const { currentUser } = useAuth();
   const [formData, setFormData] = useState({
     age: "",
@@ -100,9 +102,10 @@ export default function Profile() {
     try {
       await setDoc(userRef, payload, { merge: true });
       alert("Data saved successfully!");
+      navigate("/chat");
     } catch (err) {
       console.error("Error saving user data:", err);
-      alert("ailed to save data");
+      alert("Failed to save data");
     }
   };
 
