@@ -6,6 +6,8 @@ import styles from '../css/Modal.module.css';
 import { useNavigate } from 'react-router';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'; 
 import { db } from '../utils/firebase';
+import { EyeOpenIcon, EyeNoneIcon } from '@radix-ui/react-icons';
+import * as Toggle from '@radix-ui/react-toggle';
 
 export default function SignInModal({ onClose, onSwitchToSignUp }) {
   const [email, setEmail] = useState('');
@@ -13,6 +15,7 @@ export default function SignInModal({ onClose, onSwitchToSignUp }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, signInWithGoogle } = useAuth();
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -27,7 +30,7 @@ export default function SignInModal({ onClose, onSwitchToSignUp }) {
       setLoading(true);
       await login(email, password);
       onClose();
-      navigate('/dashboard');
+      navigate('/');
     } catch (error) {
       setError('Failed to sign in. Please check your credentials.');
       console.error('Sign in error:', error);
@@ -77,7 +80,7 @@ export default function SignInModal({ onClose, onSwitchToSignUp }) {
         navigate('/profile'); // New user - complete profile
       } else {
         onClose();
-        navigate('/dashboard'); // Existing user - go to dashboard
+        navigate('/'); // Existing user - go to dashboard
       }
     } catch (error) {
       setError('Failed to sign in with Google. Please try again.');
@@ -125,13 +128,23 @@ export default function SignInModal({ onClose, onSwitchToSignUp }) {
             <label className={styles.formLabel}>
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={styles.formInput}
-              required
-            />
+            <div className={styles.passwordWrapper}>
+              <input
+                type={passwordVisible ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={styles.formInput}
+                required
+              />
+              <Toggle.Root
+                  pressed={passwordVisible}
+                  onPressedChange={setPasswordVisible}
+                  className={styles.eyeButton}
+                  aria-label="Toggle password visibility"
+                >
+                  {passwordVisible ? <EyeNoneIcon /> : <EyeOpenIcon />}
+                </Toggle.Root>
+              </div>              
           </div>
 
           <button
