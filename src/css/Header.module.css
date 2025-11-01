@@ -1,22 +1,37 @@
+.mainHeader button {
+  background: #4CAF50;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.mainHeader button:hover {
+  background: #45a049;
+}
+
 .mainHeader {
+  position: fixed;
+  top: 0;
+  left: 0; 
+  right: 0;
+  height: 64px;
+  background-color: #ffffff; 
+  color: #333;
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 1rem 2rem;
-  color: #fff;
-  height: 64px;
-  width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1000;
-  box-sizing: border-box;
+  padding: 0 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  z-index: 200;
+  transition: left 0.3s ease;
 }
+
 
 .mainHeader h1 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #fff;
+  color: #ece7e7;
   margin: 0;
   font-family: 'Inter', sans-serif;
 }
@@ -28,19 +43,16 @@
 }
 
 .navLinks button {
-  background: none;
-  border: 1px solid #fff;
-  color: #fff;
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
   padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
+  border-radius: 6px;
   transition: all 0.2s ease;
 }
 
 .navLinks button:hover {
-  background: #fff;
-  color: #000;
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .navLinks a {
@@ -49,6 +61,7 @@
   padding: 0.5rem 1rem;
   border-radius: 4px;
   transition: all 0.2s ease;
+  background: #4CAF50;
 }
 
 .navLinks a:hover {
@@ -56,10 +69,11 @@
 }
 
 .navLink {
-  color: #fff;
+  color: #333;
   text-decoration: none;
+  font-weight: 500;
   padding: 0.5rem 1rem;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.2s ease;
 }
 
@@ -68,13 +82,14 @@
 }
 
 .navLink.active {
-  background: rgba(87, 87, 87, 0.2);
+  background: #4CAF50;
   font-weight: 600;
+  color: #535050;
 }
 
 .navLinks span {
-  color: #fff;
-  font-size: 0.9rem;
+  color: #333;
+  font-size: 1rem;
   display: block;
 }
 
@@ -84,18 +99,9 @@
   align-items: center;
 }
 
-.mainHeader nav button {
-  background: none;
-  border: 1px solid #fff;
-  color: #fff;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-}
-
 .mainHeader nav button:hover {
-  background: #fff;
+  background: #45a049;
   color: #000;
 }
+
+

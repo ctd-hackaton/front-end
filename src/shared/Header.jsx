@@ -4,9 +4,12 @@ import { useAuth } from "../hooks/useAuth";
 import SignInModal from "../features/SignInModal";
 import SignUpModal from "../features/SignUpModal";
 import styles from "../css/Header.module.css";
+import { useFirestoreDoc } from "../hooks/useFirestoreDoc";
 
 function Header() {
   const { currentUser, logout } = useAuth();
+  const userId = currentUser?.uid;
+  const { data: userDoc, loading, error } = useFirestoreDoc("users", userId);
   const navigate = useNavigate();
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
@@ -20,16 +23,13 @@ function Header() {
     }
   };
 
-  const getName = (user) => {
-    if (!user) return "User";
-
-    return (
-      user.displayName ||
-      user.email ||
-      user.providerData?.[0]?.displayName ||
-      user.providerData?.[0]?.email ||
-      "User"
-    );
+  const getName = () => {
+    if (loading) return "Loading...";
+    if (error) return "Error";
+    if (userDoc?.displayName) return userDoc.displayName;
+    if (currentUser?.displayName) return currentUser.displayName;
+    if (currentUser?.email) return currentUser.email;
+    return "User";
   };
 
   return (
@@ -39,7 +39,7 @@ function Header() {
           <div className={styles.navLinks}>
             <span>Hello {getName(currentUser)}</span>
             <NavLink
-              to="/dashboard"
+              to="/"
               className={({ isActive }) =>
                 isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
               }
