@@ -55,6 +55,7 @@ function SmallChat({ week, day, type, meal, onMealUpdate }) {
         : null,
     [week, day, type, meal]
   );
+  // DELETEME:
   console.log(updatedMeal);
   const handleSend = useCallback(
     async (messageText, _, onMessageUpdate) => {
