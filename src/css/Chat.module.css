@@ -1,11 +1,12 @@
 /* Chat UI styles - follows the existing CSS-module pattern */
 .chatContainer {
-  max-width: var(--max-width);
+  width: 40vw;
+  max-width: 40vw;
   margin: 0 auto;
-  margin-top: var(--header-height);
   padding: var(--container-gap);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   gap: 0.75rem;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
     Arial;
@@ -29,9 +30,8 @@
   background: var(--muted-surface);
   border-radius: var(--radius-md);
   padding: var(--container-gap);
-  /* Make messages area flexible and scrollable without causing body scroll */
-  flex: 1 1 auto;
-  min-height: 0; /* allow flex children to shrink properly */
+  flex: 1 1 0;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -66,12 +66,15 @@
 
 .messageText {
   white-space: pre-wrap;
+  text-align: left;
 }
 
 .inputRow {
   display: flex;
   gap: 0.5rem;
   align-items: flex-end;
+  min-height: 64px;
+  flex-shrink: 0;
 }
 
 .input {
@@ -95,6 +98,8 @@
   border: none;
   padding: 0.6rem 1rem;
   border-radius: var(--radius-md);
+  width: 90px;
+  flex-shrink: 0;
   cursor: pointer;
 }
 
@@ -105,5 +110,7 @@
 
 .error {
   color: var(--danger);
+  min-height: 1.25rem;
   margin-top: 0.5rem;
+  flex-shrink: 0;
 }
