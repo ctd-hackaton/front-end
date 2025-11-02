@@ -91,7 +91,7 @@ function WeeklyStats({ weekPlan }) {
 
     const color = d3.scaleOrdinal()
       .domain(['calories', 'carbs', 'fats', 'protein'])
-      .range(['#10b981', '#0ea5e9', '#f59e0b', '#ef4444']);
+      .range(['#0d9488', '#7c3aed', '#d97706', '#dc2626']);
 
     const yAxisCalories = d3.axisLeft(yCalories)
       .ticks(5)
