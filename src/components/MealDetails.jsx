@@ -1,7 +1,7 @@
-import { MdClose, MdFavorite, MdThumbDown } from 'react-icons/md';
+import { MdClose, MdFavorite, MdThumbDown, MdFavoriteBorder } from 'react-icons/md';
 import styles from "../css/dashboard/MealDetails.module.css";
 
-function MealDetails({ mealType, mealData, onClose, onDislike }) {
+function MealDetails({ mealType, mealData, onClose, onDislike, onLike, isLiked = false }) {
   if (!mealData) return null;
 
   return (
@@ -12,8 +12,11 @@ function MealDetails({ mealType, mealData, onClose, onDislike }) {
           <h3 className={styles.mealName}>{mealData.name}</h3>
         </div>
         <div className={styles.actionButtons}>
-          <button className={styles.iconButton}>
-            <MdFavorite />
+          <button 
+            className={styles.iconButton} 
+            onClick={() => onLike && onLike(mealType, mealData)}
+          >
+            {isLiked ? <MdFavorite /> : <MdFavoriteBorder />}
           </button>
           <button className={styles.iconButton} onClick={onDislike}>
             <MdThumbDown />
