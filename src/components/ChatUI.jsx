@@ -1,6 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import styles from "../css/ChatUI.module.css";
 
+const funLoadingMessages = [
+  "📖 Chef is reading his old notes...",
+  "🧐 Double-checking your preferences...",
+  "✨ Enhancing deliciousness levels...",
+  "🔍 Consulting the flavor archives...",
+  "🎨 Adding artistic touches...",
+  "👨‍🍳 Perfecting the techniques...",
+  "🌟 Sprinkling some culinary magic...",
+];
+
 function ChatUI({
   onSend,
   initialMessages = [],
@@ -16,8 +26,26 @@ function ChatUI({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [messages, setMessages] = useState(initialMessages);
+  const [chefThinkingMessage, setChefThinkingMessage] = useState(
+    funLoadingMessages[0]
+  );
   const inputRef = useRef(null);
   const messagesEndRef = useRef(null);
+
+  // Rotate through fun loading messages while Chef is thinking
+  useEffect(() => {
+    if (!loading) return;
+
+    const interval = setInterval(() => {
+      setChefThinkingMessage(
+        funLoadingMessages[
+          Math.floor(Math.random() * funLoadingMessages.length)
+        ]
+      );
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [loading]);
   const handleSend = async () => {
     if (!message.trim()) {
       setError("Please enter a message");
@@ -110,6 +138,16 @@ function ChatUI({
             <div className={styles.messageText}>{m.text}</div>
           </div>
         ))}
+
+        {loading && (
+          <div className={styles.messageAssistant}>
+            <div className={styles.messageText}>
+              <span className={styles.thinkingMessage}>
+                {chefThinkingMessage}
+              </span>
+            </div>
+          </div>
+        )}
 
         <div ref={messagesEndRef} />
       </div>

@@ -31,6 +31,12 @@
   gap: 1.5rem;
   align-items: center;
 }
+
+.headerNavLinks {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
 .navLinks {
   color: var(--muted-text);
   display: flex;
@@ -191,6 +197,46 @@
   animation: slideDown 0.3s ease;
 }
 
+.recipeStatusContainer {
+  min-width: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recipeProgressInline {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--sec-bg);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.3s ease;
+}
+
+.recipeCompleteInline {
+  padding: 0.5rem 1rem;
+  background: var(--sec-bg);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes slideDown {
   from {
     transform: translateY(-100%);
@@ -212,15 +258,15 @@
 
 .progressText {
   color: var(--text);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 500;
   white-space: nowrap;
-  min-width: 200px;
 }
 
 .progressBar {
   flex: 1;
-  height: 8px;
+  min-width: 150px;
+  height: 6px;
   background: rgba(16, 185, 129, 0.15);
   border-radius: var(--radius-sm);
   overflow: hidden;
@@ -238,10 +284,10 @@
   background: transparent;
   border: 1px solid var(--muted-text);
   color: var(--text);
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.5rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   transition: all 0.2s ease;
   white-space: nowrap;
 }

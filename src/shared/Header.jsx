@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { db, functions } from "../utils/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
@@ -15,10 +15,60 @@ function Header() {
   const userId = currentUser?.uid;
   const { data: userDoc, loading, error } = useFirestoreDoc("users", userId);
   const navigate = useNavigate();
+  const location = useLocation();
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const [recipeStatus, setRecipeStatus] = useState(null);
+  const [currentWeekId, setCurrentWeekId] = useState(null);
+
+  // Get weekId from location state or dashboard
+  useEffect(() => {
+    if (location.state?.weekId) {
+      setCurrentWeekId(location.state.weekId);
+    }
+  }, [location]);
+
+  // Listen to recipe generation status
+  useEffect(() => {
+    if (!currentUser || !currentWeekId) {
+      setRecipeStatus(null);
+      return;
+    }
+
+    const unsubscribe = onSnapshot(
+      doc(db, `users/${currentUser.uid}/mealPlans/${currentWeekId}`),
+      (doc) => {
+        const status = doc.data()?.recipeGenerationStatus;
+        setRecipeStatus(status);
+
+        // Clear weekId and status when generation is complete
+        if (status?.completedAt && !status?.isGenerating) {
+          setTimeout(() => {
+            setCurrentWeekId(null);
+            setRecipeStatus(null);
+          }, 3000); // Show completion message for 3 seconds
+        }
+      }
+    );
+
+    return () => unsubscribe();
+  }, [currentUser, currentWeekId]);
+
+  const handleCancelRecipes = async () => {
+    if (!currentWeekId) return;
+
+    try {
+      const cancelRecipeGeneration = httpsCallable(
+        functions,
+        "cancelRecipeGeneration"
+      );
+      await cancelRecipeGeneration({ weekId: currentWeekId });
+    } catch (error) {
+      console.error("Failed to cancel recipe generation:", error);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -54,28 +104,64 @@ function Header() {
         <ChefHat className={styles.headerLogoIcon} size={28} />
         <h1 className={styles.headerLogoText}>Chef Jul</h1>
       </a>
-      {currentUser && (
-        <div className={styles.headerCenter}>
-          <NavLink
-            to="/"
-            className={({ isActive }) =>
-              isActive
-                ? `${styles.navLink} ${styles.navLinkActiveHome}`
-                : styles.navLink
-            }
-          >
-            Home
-          </NavLink>
-          <NavLink
-            to="/dashboard"
-            className={({ isActive }) =>
-              isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
-            }
-          >
-            Dashboard
-          </NavLink>
+
+      <div className={styles.headerCenter}>
+        <div className={styles.recipeStatusContainer}>
+          {recipeStatus?.isGenerating && (
+            <div className={styles.recipeProgressInline}>
+              <span className={styles.progressText}>
+                📖 Generating recipes... {recipeStatus.progress}/
+                {recipeStatus.total}
+              </span>
+              <div className={styles.progressBar}>
+                <div
+                  className={styles.progressFill}
+                  style={{
+                    width: `${
+                      (recipeStatus.progress / recipeStatus.total) * 100
+                    }%`,
+                  }}
+                />
+              </div>
+              <button
+                className={styles.cancelButton}
+                onClick={handleCancelRecipes}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+          {recipeStatus?.completedAt &&
+            !recipeStatus?.isGenerating &&
+            location.state?.generatingRecipes && (
+              <div className={styles.recipeCompleteInline}>
+                ✅ Recipes ready!
+              </div>
+            )}
         </div>
-      )}
+        {currentUser && (
+          <div className={styles.headerNavLinks}>
+            <NavLink
+              to="/"
+              className={({ isActive }) =>
+                isActive
+                  ? `${styles.navLink} ${styles.navLinkActiveHome}`
+                  : styles.navLink
+              }
+            >
+              Home
+            </NavLink>
+            <NavLink
+              to="/dashboard"
+              className={({ isActive }) =>
+                isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
+              }
+            >
+              Dashboard
+            </NavLink>
+          </div>
+        )}
+      </div>
       <nav className={styles.headerRight}>
         {currentUser ? (
           <div className={styles.headerProfile} ref={dropdownRef}>
