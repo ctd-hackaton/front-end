@@ -10,6 +10,7 @@ import { chatLoader } from "./loaders/chatLoader";
 import "./App.css";
 import SmallChat from "./pages/SmallChat";
 import Userinfo from "./pages/Userinfo";
+import Statistics from "./pages/Statistics";
 
 function AppLayout() {
   return (
@@ -66,6 +67,14 @@ function App() {
           element: (
             <ProtectedRoute>
               <Userinfo />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "statistics",
+          element: (
+            <ProtectedRoute>
+              <Statistics />
             </ProtectedRoute>
           ),
         },

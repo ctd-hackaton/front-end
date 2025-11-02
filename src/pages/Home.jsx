@@ -1,8 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo   } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
+import DailyMealPlan from "../components/DailyMealPlan";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../utils/firebase";
+import { getISOWeekYear, getISOWeek } from 'date-fns';
+import ShoppingListCard from '../components/ShoppingListCard';
+import FavoriteRecipes from '../components/FavoriteRecipes';
 import styles from '../css/Home.module.css';
 
+import { goals } from '../components/stat/goalsData.js';
+import { GoalCard } from '../components/stat/GoalCard';
+import stylesGC from '../css/Statistics.module.css';
+
+const getDay = (date) => {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  return days[date.getDay()];
+};
 function Home() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -14,7 +28,11 @@ function Home() {
     statistics: true,
     savedRecipes: true
   });
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);  
 
+  
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
@@ -26,26 +44,33 @@ function Home() {
     }));
   };
 
+  const todayKey = Object.keys(data?.weekPlan || {}).find(
+    k => k.toLowerCase() === getDay(new Date()).toLowerCase()
+  );
+  
+  const todayMeals = todayKey ? data.weekPlan[todayKey] : null;
+  const calorieGoal = goals.find(g => g.label === 'Calories');
+
   // Mock data
-  const mealPlan = [
-    { type: 'Breakfast', meal: 'Oatmeal with berries', time: '8:00 AM', calories: 350 },
-    { type: 'Lunch', meal: 'Grilled chicken salad', time: '12:30 PM', calories: 450 },
-    { type: 'Dinner', meal: 'Salmon with vegetables', time: '7:00 PM', calories: 550 },
-    { type: 'Snack', meal: 'Greek yogurt', time: '3:00 PM', calories: 150 }
-  ];
+  // const mealPlan = [
+  //   { type: 'Breakfast', meal: 'Oatmeal with berries', time: '8:00 AM', calories: 350 },
+  //   { type: 'Lunch', meal: 'Grilled chicken salad', time: '12:30 PM', calories: 450 },
+  //   { type: 'Dinner', meal: 'Salmon with vegetables', time: '7:00 PM', calories: 550 },
+  //   { type: 'Snack', meal: 'Greek yogurt', time: '3:00 PM', calories: 150 }
+  // ];
 
-  const statistics = {
-    totalCookings: 47,
-    totalCalories: 1847,
-    savedRecipesCount: 23
-  };
+  // const statistics = {
+  //   totalCookings: 47,
+  //   totalCalories: 1847,
+  //   savedRecipesCount: 23
+  // };
 
-  const savedRecipes = [
-    { id: 1, title: 'Pasta Carbonara', image: '/recipe1.jpg' },
-    { id: 2, title: 'Chicken Curry', image: '/recipe2.jpg' },
-    { id: 3, title: 'Greek Salad', image: '/recipe3.jpg' },
-    { id: 4, title: 'Beef Tacos', image: '/recipe4.jpg' }
-  ];
+  // const savedRecipes = [
+  //   { id: 1, title: 'Pasta Carbonara', image: '/recipe1.jpg' },
+  //   { id: 2, title: 'Chicken Curry', image: '/recipe2.jpg' },
+  //   { id: 3, title: 'Greek Salad', image: '/recipe3.jpg' },
+  //   { id: 4, title: 'Beef Tacos', image: '/recipe4.jpg' }
+  // ];
 
   const shoppingList = [
     { name: 'Eggs', quantity: '12 pcs' },
@@ -57,6 +82,30 @@ function Home() {
     { name: 'Berries', quantity: '200 g' },
     { name: 'Olive oil', quantity: '250 ml' }
   ];
+  const documentId = `${getISOWeekYear(new Date())}-W${getISOWeek(new Date())}`;
+  useEffect(() => {
+    if (!currentUser) return;
+  
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const docRef = doc(db, "users", currentUser.uid, "mealPlans", documentId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setData({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          setData(null);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchData();
+  }, [currentUser]);
 
   return (
     <div className={styles.homePage}>
@@ -65,81 +114,42 @@ function Home() {
           
           {/* Meal Plan Section - Top Left */}
           {homeSettings.mealPlan && (
-            <div className={styles.mealPlanSection} onClick={() => navigate('/dashboard')}>
-              <div className={styles.sectionHeader}>
-                <h3>📅 Today's Meal Plan</h3>
-              </div>
-              <div className={styles.mealPlanList}>
-                {mealPlan.map((meal, index) => (
-                  <div key={index} className={styles.mealItem}>
-                    <div className={styles.mealType}>{meal.type}</div>
-                    <div className={styles.mealDetails}>
-                      <span className={styles.mealName}>{meal.meal}</span>
-                      <span className={styles.mealTime}>{meal.time}</span>
-                    </div>
-                    <div className={styles.mealCalories}>{meal.calories} kcal</div>
+            <div onClick={() => navigate('/dashboard')}>
+                <div>
+                    {loading && <p>Loading...</p>}
+                    {error && <p>{error}</p>}
+                    {!loading && !error && (
+                      <DailyMealPlan
+                        dayName={getDay(new Date())} 
+                        dayMeals={todayMeals}
+                      />
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>      
           )}
 
           {/* Shopping List - Top Right */}
           {homeSettings.shoppingList && (
-            <div className={styles.shoppingListSection} onClick={() => navigate('/shopping-list')}>
-              <div className={styles.sectionHeader}>
-                <h3>🛒 Shopping List</h3>
-              </div>
-              <ul className={styles.shoppingList}>
-                {shoppingList.map((item, index) => (
-                  <li key={index} className={styles.shoppingItem}>
-                    <span className={styles.itemName}>{item.name}</span>
-                    <span className={styles.itemQuantity}>{item.quantity}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              <ShoppingListCard initialItems={shoppingList.map((item, index) => ({
+                id: index + 1,
+                name: item.name,
+                checked: true
+              }))} />
           )}
 
           {/* Statistics Section - Bottom Left */}
           {homeSettings.statistics && (
-            <div className={styles.statisticsSection} onClick={() => navigate('/statistics')}>
-              <div className={styles.sectionHeader}>
-                <h3>📈 Quick Stats</h3>
-              </div>
-              <div className={styles.statsGrid}>
-                <div className={styles.statCard}>
-                  <div className={styles.statValue}>{statistics.totalCookings}</div>
-                  <div className={styles.statLabel}>Total Cookings</div>
+            <div onClick={() => navigate('/statistics')}>
+              <div className={stylesGC.container}>
+                  <GoalCard goal={calorieGoal} styles={stylesGC} />
                 </div>
-                <div className={styles.statCard}>
-                  <div className={styles.statValue}>{statistics.totalCalories}</div>
-                  <div className={styles.statLabel}>Today's Calories</div>
-                </div>
-                <div className={styles.statCard}>
-                  <div className={styles.statValue}>{statistics.savedRecipesCount}</div>
-                  <div className={styles.statLabel}>Saved Recipes</div>
-                </div>
-              </div>
             </div>
           )}
 
           {/* Saved Recipes Section - Bottom Right */}
           {homeSettings.savedRecipes && (
             <div className={styles.recipesSection} onClick={() => navigate('/recipes/saved')}>
-              <div className={styles.sectionHeader}>
-                <h3>❤️ Saved Recipes</h3>
-              </div>
-              <div className={styles.recipesGrid}>
-                {savedRecipes.map((recipe) => (
-                  <div key={recipe.id} className={styles.recipeCard}>
-                    <div className={styles.recipeImage}>
-                      <div className={styles.recipePlaceholder}>🍽️</div>
-                    </div>
-                    <div className={styles.recipeTitle}>{recipe.title}</div>
-                  </div>
-                ))}
-              </div>
+              <FavoriteRecipes />
             </div>
           )}
           {/* Edit Home Button */}

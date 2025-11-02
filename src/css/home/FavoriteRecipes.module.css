@@ -1,0 +1,111 @@
+.card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: var(--container-gap);
+    max-width: 800px;
+    width: 100%;
+    box-shadow: var(--shadow-md);
+    border: none;
+  }
+  
+  .header {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--container-gap);
+    padding-bottom: var(--container-gap);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+  }
+  
+  .imagesContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--container-gap);
+  }
+  
+  .imageCard {
+    background: var(--sec-bg);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+  }
+  
+  .imageCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  
+  .imageWrapper {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    background: var(--bg);
+    position: relative;
+  }
+  
+  .image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  .imageCard:hover .image {
+    transform: scale(1.05);
+  }
+  
+  .imageInfo {
+    padding: var(--container-gap);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .imageTitle {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.4;
+  }
+  
+  .imageDescription {
+    color: var(--muted-text);
+    margin: 0;
+    font-size: 0.875rem;
+  }
+  
+  @media (max-width: 768px) {
+    .imagesContainer {
+      grid-template-columns: 1fr;
+    }
+    
+    .imageWrapper {
+      height: 200px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .card {
+      padding: 0.75rem;
+    }
+    
+    .imageWrapper {
+      height: 160px;
+    }
+  }
