@@ -1,4 +1,4 @@
-import styles from "../css/DailyMealPlan.module.css";
+import styles from "../css/dashboard/DailyMealPlan.module.css";
 
 function DailyMealPlan({ dayName, dayMeals }) {
   const mealOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -11,10 +11,7 @@ function DailyMealPlan({ dayName, dayMeals }) {
   if (!dayMeals) {
     return (
       <div className={styles.card}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Meal Plan - {dayName}</h2>
-        </div>
-        <p className={styles.noMeals}>No meal plan found for {dayName}</p>
+        <p className={styles.noMeals}>No meal plan found for this day</p>
       </div>
     );
   }

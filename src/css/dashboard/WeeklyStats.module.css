@@ -1,0 +1,34 @@
+.container {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: var(--container-gap);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: start;
+  margin: 0;
+  margin-bottom: var(--container-gap);
+  padding-bottom: var(--container-gap);
+}
+
+.noData {
+  text-align: center;
+  color: var(--muted-text);
+  padding: var(--container-gap);
+}
+
+.chartContainer {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.chart {
+  width: 100%;
+  height: 400px;
+  display: block;
+}

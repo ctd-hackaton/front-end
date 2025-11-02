@@ -5,9 +5,10 @@ import { useAuth } from "../hooks/useAuth";
 import { DayPicker } from "react-day-picker";
 import { getISOWeekYear, getISOWeek } from 'date-fns';
 import DailyMealPlan from "../components/DailyMealPlan";
+import WeeklyStats from "../components/WeeklyStats";
 import "react-day-picker/style.css";
 
-import styles from "../css/Dashboard.module.css";
+import styles from "../css/dashboard/Dashboard.module.css";
 
 const getDay = (date) => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -59,42 +60,49 @@ function Dashboard() {
 
 
   return (
-    <div className={styles.mainDash}>
-      <div>
-        <DayPicker
-          showOutsideDays
-          animate
-          className={styles.dayPicker}
-          mode="single"
-          selected={selected}
-          onSelect={setSelected}
-          required
-          showWeekNumber
-          ISOWeek
-        />
+    <div className={styles.dashboardContainer}>
+      <div className={styles.mainDash}>
+        <div>
+          <DayPicker
+            showOutsideDays
+            animate
+            className={styles.dayPicker}
+            mode="single"
+            selected={selected}
+            onSelect={setSelected}
+            required
+            showWeekNumber
+            ISOWeek
+          />
+        </div>
+
+        <div>
+          {loading && <p>Loading...</p>}
+          {error && <p>Error</p>}
+          {!loading && !error && (
+            <div>
+              {!data || !data.weekPlan ? (
+                 <DailyMealPlan dayName={null} dayMeals={null} />
+              ) : (() => {
+                const selectedDay = getDay(selected);
+                const weekPlanKeys = Object.keys(data.weekPlan);
+                const dayKey = weekPlanKeys.find(key =>
+                  key.toLowerCase() === selectedDay.toLowerCase()
+                );
+
+                const dayMeals = dayKey ? data.weekPlan[dayKey] : null;
+
+                return <DailyMealPlan dayName={selectedDay} dayMeals={dayMeals} />;
+              })()}
+            </div>
+          )}
+        </div>
       </div>
-
-      <div>
-        {loading && <p>Loading...</p>}
-        {error && <p>Error</p>}
-        {!loading && !error && (
-          <div>
-            {!data || !data.weekPlan ? (
-              <p>Nothing found</p>
-            ) : (() => {
-              const selectedDay = getDay(selected);
-              const weekPlanKeys = Object.keys(data.weekPlan);
-              const dayKey = weekPlanKeys.find(key =>
-                key.toLowerCase() === selectedDay.toLowerCase()
-              );
-
-              const dayMeals = dayKey ? data.weekPlan[dayKey] : null;
-
-              return <DailyMealPlan dayName={selectedDay} dayMeals={dayMeals} />;
-            })()}
-          </div>
-        )}
-      </div>
+      {data?.weekPlan && (
+        <div className={styles.weeklyStats}>
+          <WeeklyStats weekPlan={data?.weekPlan} />
+        </div>
+      )}
     </div>
   );
 }
