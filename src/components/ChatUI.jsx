@@ -15,7 +15,6 @@ function ChatUI({
   const [messages, setMessages] = useState(initialMessages);
   const inputRef = useRef(null);
   const messagesEndRef = useRef(null);
-  console.log(messages);
   const handleSend = async () => {
     if (!message.trim()) {
       setError("Please enter a message");
