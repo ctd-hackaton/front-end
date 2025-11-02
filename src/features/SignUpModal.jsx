@@ -115,7 +115,7 @@ export default function SignUpModal({ onClose, onSwitchToSignIn }) {
         navigate("/profile"); // New user - go to profile setup
       } else {
         onClose();
-        navigate("/dashboard"); // Existing user - go to dashboard
+        navigate("/home"); // Existing user - go to home
       }
     } catch (error) {
       setError("Failed to sign in with Google. Please try again.");

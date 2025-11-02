@@ -627,6 +627,30 @@ exports.streamOpenAI = onRequest(async (req, res) => {
 
     if (hasMealContext) {
       const { weekday, mealType, mealData, weekNumber } = mealContext;
+
+      // Build current recipe info if it exists
+      let recipeInfo = "";
+      if (mealData.recipe) {
+        const stepsText =
+          mealData.recipe.steps
+            ?.map((step, idx) => `    ${idx + 1}. ${step}`)
+            .join("\n") || "No steps";
+        const tipsText =
+          mealData.recipe.tips?.map((tip, idx) => `    - ${tip}`).join("\n") ||
+          "No tips";
+
+        recipeInfo = `
+- Current Recipe:
+  * Prep Time: ${mealData.recipe.prepTime || "N/A"}
+  * Cook Time: ${mealData.recipe.cookTime || "N/A"}
+  * Servings: ${mealData.recipe.servings || "N/A"}
+  * Difficulty: ${mealData.recipe.difficulty || "N/A"}
+  * Steps:
+${stepsText}
+  * Tips:
+${tipsText}`;
+      }
+
       systemPrompt += ` You are helping the user modify their ${mealType} meal for ${weekday} (Week ${weekNumber}).${userContext}${allergyWarning}
       
 Current meal details:
@@ -639,7 +663,7 @@ Current meal details:
         mealData.nutrition.protein
       }g protein, ${mealData.nutrition.carbs}g carbs, ${
         mealData.nutrition.fats
-      }g fats
+      }g fats${recipeInfo}
 
 IMPORTANT: Always respond with a JSON object in this exact format:
 {
@@ -650,13 +674,34 @@ IMPORTANT: Always respond with a JSON object in this exact format:
     "ingredients": [
       {"item": "ingredient name", "amount": number, "unit": "unit", "category": "category"}
     ],
-    "nutrition": {"calories": number, "protein": number, "carbs": number, "fats": number}
+    "nutrition": {"calories": number, "protein": number, "carbs": number, "fats": number},
+    "recipe": {
+      "prepTime": "15 minutes",
+      "cookTime": "25 minutes",
+      "servings": 2,
+      "difficulty": "Easy",
+      "steps": [
+        "Detailed step 1 with clear instructions",
+        "Detailed step 2 with clear instructions",
+        "Detailed step 3 with clear instructions"
+      ],
+      "tips": [
+        "Helpful cooking tip 1",
+        "Helpful cooking tip 2"
+      ]
+    }
   }
 }
 
-- If the user requests changes: Return the MODIFIED meal in updatedMeal
-- If the user is just asking questions: Return the CURRENT meal (unchanged) in updatedMeal
+- If the user requests changes: Return the MODIFIED meal with complete recipe in updatedMeal
+- If the user is just asking questions: Return the CURRENT meal (unchanged) with recipe in updatedMeal
 - Never return null for updatedMeal
+- Always include the recipe field with 5-8 detailed steps and 2-3 helpful tips
+- Recipe steps should be actionable and specific with exact temperatures, times, and techniques
+- When modifying a recipe: Keep existing steps/tips that still apply, modify what needs changing
+- When simplifying: Reduce steps or combine them, but keep all necessary information
+- When making healthier: Adjust ingredients and cooking methods in steps accordingly
+- Update prep/cook times if the changes affect timing
 
 Always maintain a similar nutritional profile unless they specifically request otherwise.
 Be concise, helpful, and encouraging in your message.`;
