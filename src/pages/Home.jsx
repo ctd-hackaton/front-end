@@ -1,22 +1,25 @@
 import { useState, useEffect, useMemo   } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
+
 import DailyMealPlan from "../components/DailyMealPlan";
+import ShoppingListCard from '../components/ShoppingListCard';
+import FavoriteRecipes from '../components/FavoriteRecipes';
+import { GoalCard } from '../components/stat/GoalCard';
+
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { getISOWeekYear, getISOWeek } from 'date-fns';
-import ShoppingListCard from '../components/ShoppingListCard';
-import FavoriteRecipes from '../components/FavoriteRecipes';
-import styles from '../css/Home.module.css';
+import { getTodayIngredients, calculateDayNutrition, buildGoalsArray } from '../utils/mealPlanUtils';
 
-import { goals } from '../components/stat/goalsData.js';
-import { GoalCard } from '../components/stat/GoalCard';
+import styles from '../css/Home.module.css';
 import stylesGC from '../css/Statistics.module.css';
 
 const getDay = (date) => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   return days[date.getDay()];
 };
+
 function Home() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -31,6 +34,7 @@ function Home() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);  
+  const [userGoals, setUserGoals] = useState(null);
 
   
   const toggleSidebar = () => {
@@ -44,45 +48,18 @@ function Home() {
     }));
   };
 
-  const todayKey = Object.keys(data?.weekPlan || {}).find(
-    k => k.toLowerCase() === getDay(new Date()).toLowerCase()
-  );
-  
-  const todayMeals = todayKey ? data.weekPlan[todayKey] : null;
-  const calorieGoal = goals.find(g => g.label === 'Calories');
-
-  // Mock data
-  // const mealPlan = [
-  //   { type: 'Breakfast', meal: 'Oatmeal with berries', time: '8:00 AM', calories: 350 },
-  //   { type: 'Lunch', meal: 'Grilled chicken salad', time: '12:30 PM', calories: 450 },
-  //   { type: 'Dinner', meal: 'Salmon with vegetables', time: '7:00 PM', calories: 550 },
-  //   { type: 'Snack', meal: 'Greek yogurt', time: '3:00 PM', calories: 150 }
+  // const shoppingList = [
+  //   { name: 'Eggs', quantity: '12 pcs' },
+  //   { name: 'Milk', quantity: '1 L' },
+  //   { name: 'Chicken breast', quantity: '2 pcs' },
+  //   { name: 'Broccoli', quantity: '1 head' },
+  //   { name: 'Oats', quantity: '500 g' },
+  //   { name: 'Greek yogurt', quantity: '2 cups' },
+  //   { name: 'Berries', quantity: '200 g' },
+  //   { name: 'Olive oil', quantity: '250 ml' }
   // ];
-
-  // const statistics = {
-  //   totalCookings: 47,
-  //   totalCalories: 1847,
-  //   savedRecipesCount: 23
-  // };
-
-  // const savedRecipes = [
-  //   { id: 1, title: 'Pasta Carbonara', image: '/recipe1.jpg' },
-  //   { id: 2, title: 'Chicken Curry', image: '/recipe2.jpg' },
-  //   { id: 3, title: 'Greek Salad', image: '/recipe3.jpg' },
-  //   { id: 4, title: 'Beef Tacos', image: '/recipe4.jpg' }
-  // ];
-
-  const shoppingList = [
-    { name: 'Eggs', quantity: '12 pcs' },
-    { name: 'Milk', quantity: '1 L' },
-    { name: 'Chicken breast', quantity: '2 pcs' },
-    { name: 'Broccoli', quantity: '1 head' },
-    { name: 'Oats', quantity: '500 g' },
-    { name: 'Greek yogurt', quantity: '2 cups' },
-    { name: 'Berries', quantity: '200 g' },
-    { name: 'Olive oil', quantity: '250 ml' }
-  ];
   const documentId = `${getISOWeekYear(new Date())}-W${getISOWeek(new Date())}`;
+
   useEffect(() => {
     if (!currentUser) return;
   
@@ -107,11 +84,43 @@ function Home() {
     fetchData();
   }, [currentUser]);
 
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const fetchUserGoals = async () => {
+      try {
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setUserGoals(userSnap.data().goals || null);
+        }
+      } catch (err) {
+        console.error("Error fetching goals:", err);
+      }
+    };
+
+    fetchUserGoals();
+  }, [currentUser]);
+
+  const todayKey = Object.keys(data?.weekPlan || {}).find(
+    k => k.toLowerCase() === getDay(new Date()).toLowerCase()
+  );  
+  const todayMeals = todayKey ? data.weekPlan[todayKey] : null;
+  const todayNutrition = todayMeals ? calculateDayNutrition(todayMeals, userGoals) : null;
+  const goalsArray = todayNutrition ? buildGoalsArray(todayNutrition, userGoals) : [];
+  const calorieGoal = goalsArray.find(g => g.label === 'Calories');
+  
+  const todayIngredients = useMemo(() => {
+    if (!data?.weekPlan) return [];
+    const ingredients = getTodayIngredients(data.weekPlan);
+    console.log("Today ingredients:", ingredients);
+    return ingredients;
+  }, [data]);
+
   return (
     <div className={styles.homePage}>
       {/* Main Content */}
-        <div className={styles.gridContainer}>
-          
+        <div className={styles.gridContainer}>          
           {/* Meal Plan Section - Top Left */}
           {homeSettings.mealPlan && (
             <div onClick={() => navigate('/dashboard')}>
@@ -127,16 +136,20 @@ function Home() {
                   </div>
                 </div>      
           )}
-
           {/* Shopping List - Top Right */}
           {homeSettings.shoppingList && (
-              <ShoppingListCard initialItems={shoppingList.map((item, index) => ({
-                id: index + 1,
-                name: item.name,
-                checked: true
-              }))} />
-          )}
-
+              !data?.weekPlan ? (
+                <p>Loading...</p>
+              ) : (
+                <ShoppingListCard
+                  initialItems={todayIngredients.map((i, idx) => ({
+                    id: idx + 1,
+                    name: `${i.item} (${i.amount} ${i.unit})`,
+                    checked: true
+                  }))}
+                />
+              )
+            )}
           {/* Statistics Section - Bottom Left */}
           {homeSettings.statistics && (
             <div onClick={() => navigate('/statistics')}>
@@ -145,7 +158,6 @@ function Home() {
                 </div>
             </div>
           )}
-
           {/* Saved Recipes Section - Bottom Right */}
           {homeSettings.savedRecipes && (
             <div className={styles.recipesSection} onClick={() => navigate('/recipes/saved')}>

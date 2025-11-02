@@ -16,6 +16,8 @@ export default function ShoppingListCard({ initialItems, maxVisible = 6 }) {
     { id: 10, name: 'Garlic', checked: false },
   ]);
 
+  console.log('ShoppingListCard rendered', items);
+
   const checkedCount = items.filter(item => item.checked).length;
   const totalCount = items.length;
   const progress = (checkedCount / totalCount) * 100;

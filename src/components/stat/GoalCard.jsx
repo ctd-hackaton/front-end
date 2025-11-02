@@ -1,7 +1,8 @@
 
 
 export function GoalCard({ goal, styles }) {
-  const Icon = goal.icon;
+  if (!goal) return null;
+  const Icon = goal.icon || (() => null);
   const percent = Math.round((goal.current / goal.target) * 100);
 
   return (
