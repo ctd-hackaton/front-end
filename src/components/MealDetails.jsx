@@ -1,7 +1,7 @@
 import { MdClose, MdFavorite, MdThumbDown } from 'react-icons/md';
 import styles from "../css/dashboard/MealDetails.module.css";
 
-function MealDetails({ mealType, mealData, onClose }) {
+function MealDetails({ mealType, mealData, onClose, onDislike }) {
   if (!mealData) return null;
 
   return (
@@ -15,7 +15,7 @@ function MealDetails({ mealType, mealData, onClose }) {
           <button className={styles.iconButton}>
             <MdFavorite />
           </button>
-          <button className={styles.iconButton}>
+          <button className={styles.iconButton} onClick={onDislike}>
             <MdThumbDown />
           </button>
           <button className={styles.iconButton} onClick={onClose}>

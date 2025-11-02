@@ -15,6 +15,11 @@
   gap: 2rem;
 }
 
+.mainDash.centered {
+  align-items: center;
+  justify-content: center;
+}
+
 .dayPicker {
   --rdp-accent-color: var(--color-primary);
   --rdp-accent-background-color: var(--color-primary-600);

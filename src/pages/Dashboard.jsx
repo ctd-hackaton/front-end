@@ -7,6 +7,7 @@ import { getISOWeekYear, getISOWeek } from 'date-fns';
 import DailyMealPlan from "../components/DailyMealPlan";
 import WeeklyStats from "../components/WeeklyStats";
 import MealDetails from "../components/MealDetails";
+import SmallChat from "./SmallChat";
 import "react-day-picker/style.css";
 
 import styles from "../css/dashboard/Dashboard.module.css";
@@ -23,14 +24,21 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedMeal, setSelectedMeal] = useState(null);
+  const [showChat, setShowChat] = useState(false);
   const { currentUser } = useAuth();
 
   const handleClick = (mealType, mealData) => {
     setSelectedMeal({ mealType, mealData });
+    setShowChat(false);
   };
 
   const handleCloseMealDetails = () => {
     setSelectedMeal(null);
+    setShowChat(false);
+  };
+
+  const handleDislike = () => {
+    setShowChat(true);
   };
 
   const documentId = useMemo(() => {
@@ -71,19 +79,28 @@ function Dashboard() {
 
   return (
     <div className={styles.dashboardContainer}>
-      <div className={styles.mainDash}>
+      <div className={`${styles.mainDash} ${showChat ? styles.centered : ''}`}>
         <div>
-          <DayPicker
-            showOutsideDays
-            animate
-            className={styles.dayPicker}
-            mode="single"
-            selected={selected}
-            onSelect={setSelected}
-            required
-            showWeekNumber
-            ISOWeek
-          />
+          {showChat && selectedMeal ? (
+            <SmallChat
+              week={documentId}
+              day={getDay(selected).toLowerCase()}
+              type={selectedMeal.mealType}
+              meal={selectedMeal.mealData}
+            />
+          ) : (
+            <DayPicker
+              showOutsideDays
+              animate
+              className={styles.dayPicker}
+              mode="single"
+              selected={selected}
+              onSelect={setSelected}
+              required
+              showWeekNumber
+              ISOWeek
+            />
+          )}
         </div>
 
         <div>
@@ -109,6 +126,7 @@ function Dashboard() {
                       mealType={selectedMeal.mealType}
                       mealData={selectedMeal.mealData}
                       onClose={handleCloseMealDetails}
+                      onDislike={handleDislike}
                     />
                   ) : (
                     <DailyMealPlan 
@@ -124,7 +142,7 @@ function Dashboard() {
           )}
         </div>
       </div>
-      {data?.weekPlan && (
+      {data?.weekPlan && !showChat && (
         <div className={styles.weeklyStats}>
           <WeeklyStats weekPlan={data?.weekPlan} />
         </div>
