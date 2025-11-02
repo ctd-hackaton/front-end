@@ -1,16 +1,18 @@
 .mainHeader {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  color: #fff;
-  height: 64px;
+  padding: 0 2rem;
+  background: var(--bg);
+  color: var(--text);
+  height: var(--header-height);
   width: 100%;
   position: fixed;
   top: 0;
   left: 0;
   z-index: 1000;
   box-sizing: border-box;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .mainHeader h1 {
@@ -21,13 +23,146 @@
   font-family: 'Inter', sans-serif;
 }
 
+.headerCenter {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1.5rem; 
+  align-items: center;
+}
 .navLinks {
+  color: var(--muted-text);
   display: flex;
   gap: 1rem;
   align-items: center;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
-.navLinks button {
+.navLink:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+  }
+
+.navLinkActiveHome {
+    background: var(--color-primary); 
+    color: var(--text); 
+    font-weight: 600;
+  }
+
+.navLinkActiveHome:hover {
+    background: var(--color-primary-600);
+    color: var(--text);
+  }
+.navLink.active { 
+    background: none; 
+    color: var(--text); 
+    font-weight: 600;
+    border-bottom: 2px solid var(--color-primary); 
+    border-radius: 0; 
+  }
+.navLink.active:hover {
+    background: none;
+  }
+  .headerRight {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    z-index: 10;
+  }
+  
+  .authButtons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  
+   
+  /* Profile section (right side) */
+  
+  .headerProfile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+  }
+  
+  .navText {
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+  
+  .profileButton {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: white;
+    fill: white;
+  }
+  
+  .profileButton:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+  
+  .profileDropdown {
+    all: unset;
+    position: absolute;
+    top: calc(100% + 8px);
+    background: var(--bg);
+    right: 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    min-width: 200px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: all 0.25s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 100;
+  }
+  
+  .profileDropdown.open {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .profileButton img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+  }
+  
+
+  .dropdownItem {
+    display: block;
+    padding: 10px 16px;
+    color: var(--text);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .dropdownItem:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-primary);
+  }
+  .navLinks button {
   background: none;
   border: 1px solid #fff;
   color: #fff;
@@ -84,18 +219,19 @@
   align-items: center;
 }
 
-.mainHeader nav button {
-  background: none;
-  border: 1px solid #fff;
-  color: #fff;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+.headerLogo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-primary);
+  text-decoration: none;
 }
 
-.mainHeader nav button:hover {
-  background: #fff;
-  color: #000;
+.headerLogoIcon {
+  color: var(--color-primary);
+}
+
+h1.headerLogoText {
+  margin: 0;
+  font-size: 1rem;
 }
