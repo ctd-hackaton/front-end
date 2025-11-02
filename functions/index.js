@@ -13,6 +13,117 @@ if (!admin.apps || !admin.apps.length) {
 
 const dbAdmin = admin.firestore();
 
+// Helper function to generate recipes for all meals in a week plan
+async function generateRecipesForMealPlan(userId, weekId, weekPlan) {
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  const days = [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ];
+  const mealTypes = ["breakfast", "lunch", "dinner"];
+
+  logger.info("Starting background recipe generation", { weekId, userId });
+
+  for (const day of days) {
+    for (const mealType of mealTypes) {
+      const meal = weekPlan[day]?.[mealType];
+      if (!meal || !meal.name || !meal.ingredients) {
+        continue;
+      }
+
+      try {
+        const ingredientList = meal.ingredients
+          .map((ing) => `${ing.amount} ${ing.unit} ${ing.item}`)
+          .join(", ");
+
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are a professional chef. Generate a detailed recipe in JSON format.
+
+Return ONLY a JSON object with this structure:
+{
+  "prepTime": "15 minutes",
+  "cookTime": "25 minutes",
+  "servings": 2,
+  "difficulty": "Easy",
+  "steps": [
+    "Detailed step 1 with clear instructions",
+    "Detailed step 2 with clear instructions",
+    "Detailed step 3 with clear instructions",
+    ...
+  ],
+  "tips": [
+    "Helpful cooking tip 1",
+    "Helpful cooking tip 2"
+  ]
+}
+
+IMPORTANT:
+- Include 5-8 detailed, clear steps
+- Each step should be actionable and specific
+- Include exact temperatures, times, and techniques
+- Add 2-3 helpful tips for best results`,
+            },
+            {
+              role: "user",
+              content: `Generate a recipe for: ${meal.name}
+            
+Description: ${meal.description || "A delicious meal"}
+Ingredients: ${ingredientList}
+
+Create detailed cooking instructions that will help someone successfully prepare this dish.`,
+            },
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.7,
+        });
+
+        const recipeData = JSON.parse(
+          completion.choices[0]?.message?.content || "{}"
+        );
+
+        // Update the meal with recipe in Firestore
+        const mealPath = `users/${userId}/mealPlans/${weekId}`;
+        await dbAdmin.doc(mealPath).update({
+          [`weekPlan.${day}.${mealType}.recipe`]: recipeData,
+        });
+
+        logger.info("Recipe generated and saved", {
+          weekId,
+          day,
+          mealType,
+          mealName: meal.name,
+        });
+
+        // Small delay to avoid rate limiting
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } catch (error) {
+        logger.error("Failed to generate recipe for meal:", {
+          error: error.message,
+          weekId,
+          day,
+          mealType,
+          mealName: meal.name,
+        });
+        // Continue with next meal even if one fails
+      }
+    }
+  }
+
+  logger.info("Background recipe generation completed", { weekId, userId });
+}
+
 exports.callOpenAI = onCall(async (request) => {
   const { message } = request.data;
 
@@ -85,9 +196,9 @@ The response should follow this exact structure:
   },
   "weekPlan": {
     "monday": {
-      "breakfast": { "name": "", "description": "", "ingredients": [...], "recipe": {...}, "thumbnail": "", "nutrition": {...} },
-      "lunch": { "name": "", "description": "", "ingredients": [...], "recipe": {...}, "thumbnail": "", "nutrition": {...} },
-      "dinner": { "name": "", "description": "", "ingredients": [...], "recipe": {...}, "thumbnail": "", "nutrition": {...} }
+      "breakfast": { "name": "", "description": "", "ingredients": [...], "nutrition": {...} },
+      "lunch": { "name": "", "description": "", "ingredients": [...], "nutrition": {...} },
+      "dinner": { "name": "", "description": "", "ingredients": [...], "nutrition": {...} }
     },
     "tuesday": { "breakfast": {...}, "lunch": {...}, "dinner": {...} },
     "wednesday": { "breakfast": {...}, "lunch": {...}, "dinner": {...} },
@@ -111,27 +222,12 @@ Each meal should include:
 - name: The name of the dish
 - description: Brief description of the meal (2-3 sentences)
 - ingredients: Array of {item, amount, unit, category}
-- recipe: {
-    prepTime: "10 minutes",
-    cookTime: "20 minutes",
-    servings: 2,
-    difficulty: "Easy|Medium|Hard",
-    steps: [
-      "Step 1 description with clear instructions",
-      "Step 2 description with clear instructions",
-      "Step 3 description with clear instructions",
-      ...
-    ],
-    tips: ["Helpful cooking tip 1", "Helpful cooking tip 2"]
-  }
-- thumbnail: A descriptive image prompt for generating a food photo (e.g., "A beautiful bowl of Greek yogurt topped with fresh mixed berries and honey drizzle, natural lighting, food photography")
 - nutrition: {calories (number), protein (grams), carbs (grams), fats (grams)}
 
 IMPORTANT: 
-- Include detailed step-by-step recipe instructions (at least 4-6 steps for most meals)
-- Make thumbnail prompts vivid and suitable for AI image generation
-- Ensure steps are clear, actionable, and in logical cooking order
-- Include prep time, cook time, servings, and difficulty level
+- Do NOT include recipe field - recipes will be generated separately
+- Focus on meal variety, nutritional balance, and interesting ingredient combinations
+- Keep descriptions appetizing and informative
 
 Return ONLY the JSON object with all 7 days completed and correct weekId.`
             : "You are a helpful nutrition and wellness assistant. Engage in natural conversation while providing accurate and helpful information about nutrition, health, and wellness.",
@@ -203,8 +299,23 @@ Return ONLY the JSON object with all 7 days completed and correct weekId.`
               createdAt: admin.firestore.Timestamp.now(),
               updatedAt: admin.firestore.Timestamp.now(),
             });
+            logger.info("Meal plan saved to Firestore", { weekId, userId });
+
+            // Generate recipes in background (don't await)
+            generateRecipesForMealPlan(userId, weekId, mealPlan.weekPlan).catch(
+              (err) => {
+                logger.error("Background recipe generation failed:", {
+                  error: err.message,
+                  weekId,
+                });
+              }
+            );
           } catch (err) {
-            console.error("Failed to save meal plan to Firestore:", err);
+            logger.error("Failed to save meal plan to Firestore:", {
+              error: err.message,
+              stack: err.stack,
+              weekId,
+            });
           }
         }
 
@@ -232,11 +343,11 @@ Return ONLY the JSON object with all 7 days completed and correct weekId.`
       structured: false,
     };
   } catch (error) {
-    logger.error("OpenAI error:", error);
-    console.error(
-      "OpenAI error stack:",
-      error && error.stack ? error.stack : error
-    );
+    logger.error("OpenAI error:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
 
     throw new Error(
       `Failed to call OpenAI: ${error.message || "unknown error"}`
@@ -395,5 +506,89 @@ Be concise, helpful, and encouraging in your message.`;
     if (!res.headersSent) {
       res.status(500).json({ error: error.message || "unknown error" });
     }
+  }
+});
+
+exports.generateRecipe = onCall(async (request) => {
+  const { mealName, ingredients, description } = request.data;
+
+  if (!mealName || !ingredients) {
+    throw new Error("Meal name and ingredients are required");
+  }
+
+  try {
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const ingredientList = ingredients
+      .map((ing) => `${ing.amount} ${ing.unit} ${ing.item}`)
+      .join(", ");
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are a professional chef. Generate a detailed recipe in JSON format.
+
+Return ONLY a JSON object with this structure:
+{
+  "prepTime": "15 minutes",
+  "cookTime": "25 minutes",
+  "servings": 2,
+  "difficulty": "Easy",
+  "steps": [
+    "Detailed step 1 with clear instructions",
+    "Detailed step 2 with clear instructions",
+    "Detailed step 3 with clear instructions",
+    ...
+  ],
+  "tips": [
+    "Helpful cooking tip 1",
+    "Helpful cooking tip 2"
+  ]
+}
+
+IMPORTANT:
+- Include 5-8 detailed, clear steps
+- Each step should be actionable and specific
+- Include exact temperatures, times, and techniques
+- Add 2-3 helpful tips for best results`,
+        },
+        {
+          role: "user",
+          content: `Generate a recipe for: ${mealName}
+            
+Description: ${description || "A delicious meal"}
+Ingredients: ${ingredientList}
+
+Create detailed cooking instructions that will help someone successfully prepare this dish.`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
+
+    const recipeData = JSON.parse(
+      completion.choices[0]?.message?.content || "{}"
+    );
+
+    logger.info("Recipe generated successfully", { mealName });
+
+    return {
+      success: true,
+      recipe: recipeData,
+    };
+  } catch (error) {
+    logger.error("Recipe generation error:", {
+      message: error.message,
+      stack: error.stack,
+      mealName,
+    });
+
+    throw new Error(
+      `Failed to generate recipe: ${error.message || "unknown error"}`
+    );
   }
 });

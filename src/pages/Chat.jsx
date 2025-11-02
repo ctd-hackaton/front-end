@@ -14,37 +14,44 @@ function Chat() {
 
   const handleSend = useCallback(
     async (messageText, userMsg) => {
-      const callOpenAI = httpsCallable(functions, "callOpenAI");
-      const result = await callOpenAI({ message: messageText });
+      try {
+        const callOpenAI = httpsCallable(functions, "callOpenAI");
+        const result = await callOpenAI({ message: messageText });
 
-      await saveMessageToDB(currentUser.uid, userMsg);
+        await saveMessageToDB(currentUser.uid, userMsg);
 
-      let responseText = result.data.response;
-      if (result.data.structured && result.data.mealPlan) {
-        const { text } = result.data.mealPlan;
-        responseText = `${
-          text.weekOverview
-        }\n\n--- Daily Overview ---\n${Object.entries(text.dailyDescription)
-          .map(
-            ([day, desc]) =>
-              `${day.charAt(0).toUpperCase() + day.slice(1)}: ${desc}`
-          )
-          .join("\n\n")}\n\n--- Nutrition Summary ---\n${
-          text.nutritionSummary
-        }`;
+        let responseText = result.data.response;
+        if (result.data.structured && result.data.mealPlan) {
+          const { text } = result.data.mealPlan;
+          responseText = `${
+            text.weekOverview
+          }\n\n--- Daily Overview ---\n${Object.entries(text.dailyDescription)
+            .map(
+              ([day, desc]) =>
+                `${day.charAt(0).toUpperCase() + day.slice(1)}: ${desc}`
+            )
+            .join("\n\n")}\n\n--- Nutrition Summary ---\n${
+            text.nutritionSummary
+          }`;
+        }
+
+        const assistantMsg = {
+          id: Date.now() + 1,
+          role: "assistant",
+          text: responseText,
+          structured: result.data.structured,
+          mealPlan: result.data.mealPlan,
+        };
+
+        await saveMessageToDB(currentUser.uid, assistantMsg);
+
+        return assistantMsg;
+      } catch (error) {
+        console.error("Chat handleSend error:", error);
+        throw new Error(
+          `Failed to get response: ${error.message || "Unknown error"}`
+        );
       }
-
-      const assistantMsg = {
-        id: Date.now() + 1,
-        role: "assistant",
-        text: responseText,
-        structured: result.data.structured,
-        mealPlan: result.data.mealPlan,
-      };
-
-      await saveMessageToDB(currentUser.uid, assistantMsg);
-
-      return assistantMsg;
     },
     [currentUser]
   );
