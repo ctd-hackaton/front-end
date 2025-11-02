@@ -13,6 +13,19 @@ if (!admin.apps || !admin.apps.length) {
 
 const dbAdmin = admin.firestore();
 
+// Constants
+const DAYS_OF_WEEK = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+const MEAL_TYPES = ["breakfast", "lunch", "dinner"];
+
 // Helper function to get meal image URL from Foodish API
 // Simple API call - returns random food image URL
 async function getMealImageUrl(mealName) {
@@ -53,22 +66,116 @@ async function getMealImageUrl(mealName) {
   });
 }
 
+// Helper function to fetch user preferences from Firestore
+async function fetchUserPreferences(userId, context = "Chef Jul") {
+  if (!userId) return null;
+
+  try {
+    const userDoc = await dbAdmin.doc(`users/${userId}`).get();
+    if (userDoc.exists()) {
+      return userDoc.data();
+    }
+  } catch (err) {
+    logger.warn(`Could not fetch user preferences for ${context}`, {
+      error: err.message,
+    });
+  }
+  return null;
+}
+
+// Helper function to build user context string from preferences
+function buildUserContext(userPreferences) {
+  if (!userPreferences) return "";
+
+  const parts = [];
+
+  // Personal data
+  if (userPreferences.personalData) {
+    const { age, weightKg, heightCm, activityLevel } =
+      userPreferences.personalData;
+    const personalParts = [];
+    if (age) personalParts.push(`Age: ${age}`);
+    if (weightKg) personalParts.push(`Weight: ${weightKg}kg`);
+    if (heightCm) personalParts.push(`Height: ${heightCm}cm`);
+    if (activityLevel) personalParts.push(`Activity level: ${activityLevel}`);
+    if (personalParts.length > 0) parts.push(personalParts.join(", "));
+  }
+
+  // Preferences
+  if (userPreferences.preferences) {
+    const {
+      dietType,
+      favoriteCuisine,
+      excludedIngredientRefs,
+      allergyIngredientRefs,
+    } = userPreferences.preferences;
+    const prefParts = [];
+    if (dietType && dietType !== "none") prefParts.push(`Diet: ${dietType}`);
+    if (favoriteCuisine?.length > 0) {
+      prefParts.push(`Favorite cuisines: ${favoriteCuisine.join(", ")}`);
+    }
+    if (excludedIngredientRefs?.length > 0) {
+      prefParts.push(
+        `Excluded ingredients: ${excludedIngredientRefs.join(", ")}`
+      );
+    }
+    if (prefParts.length > 0) parts.push(prefParts.join(", "));
+
+    // Allergies - emphasize
+    if (allergyIngredientRefs?.length > 0) {
+      parts.push(
+        `⚠️ ALLERGIES: ${allergyIngredientRefs.join(", ")} - MUST AVOID!`
+      );
+    }
+  }
+
+  // Goals
+  if (userPreferences.goals) {
+    const {
+      dailyCalorieTarget,
+      proteinGoalGrams,
+      carbsGoalGrams,
+      fatsGoalGrams,
+    } = userPreferences.goals;
+    const goalParts = [];
+    if (dailyCalorieTarget)
+      goalParts.push(`Daily calorie target: ${dailyCalorieTarget} kcal`);
+    const macroParts = [];
+    if (proteinGoalGrams) macroParts.push(`${proteinGoalGrams}g protein`);
+    if (carbsGoalGrams) macroParts.push(`${carbsGoalGrams}g carbs`);
+    if (fatsGoalGrams) macroParts.push(`${fatsGoalGrams}g fats`);
+    if (macroParts.length > 0)
+      goalParts.push(`Daily macro goals: ${macroParts.join(", ")}`);
+    if (goalParts.length > 0) parts.push(goalParts.join(", "));
+  }
+
+  if (parts.length > 0) {
+    return `\n\nUSER PROFILE:\n${parts.join("\n")}`;
+  }
+  return "";
+}
+
+// Helper function to get allergy warning if user has allergies
+function getAllergyWarning(userPreferences) {
+  if (userPreferences?.preferences?.allergyIngredientRefs?.length > 0) {
+    return "\n⚠️ CRITICAL: User has allergies! NEVER include allergenic ingredients in any meal!";
+  }
+  return "";
+}
+
 // Helper function to generate recipes for all meals in a week plan
 async function generateRecipesForMealPlan(userId, weekId, weekPlan) {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
 
-  const days = [
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-    "sunday",
-  ];
-  const mealTypes = ["breakfast", "lunch", "dinner"];
+  // Fetch user preferences for allergen and dietary information
+  const userPreferences = await fetchUserPreferences(
+    userId,
+    "Recipe Generator"
+  );
+  const userContext = buildUserContext(userPreferences);
+  const allergyWarning = getAllergyWarning(userPreferences);
 
   logger.info("Starting background recipe generation", { weekId, userId });
 
@@ -76,8 +183,8 @@ async function generateRecipesForMealPlan(userId, weekId, weekPlan) {
 
   // Build list of all meals to process
   const mealsToProcess = [];
-  for (const day of days) {
-    for (const mealType of mealTypes) {
+  for (const day of DAYS_OF_WEEK) {
+    for (const mealType of MEAL_TYPES) {
       const meal = weekPlan[day]?.[mealType];
       if (meal && meal.name && meal.ingredients) {
         mealsToProcess.push({ day, mealType, meal });
@@ -117,7 +224,7 @@ async function generateRecipesForMealPlan(userId, weekId, weekPlan) {
           messages: [
             {
               role: "system",
-              content: `You are a professional chef. Generate a detailed recipe in JSON format.
+              content: `You are a professional chef. Generate a detailed recipe in JSON format.${userContext}${allergyWarning}
 
 Return ONLY a JSON object with this structure:
 {
@@ -229,6 +336,10 @@ exports.callOpenAI = onCall(async (request) => {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
+    // Fetch user preferences if authenticated
+    const userId = request?.auth?.uid || null;
+    const userPreferences = await fetchUserPreferences(userId, "Chef Jul");
+
     const intentCheck = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -258,18 +369,22 @@ exports.callOpenAI = onCall(async (request) => {
       currentWeekNum
     ).padStart(2, "0")}`;
 
+    // Build user context and allergy warning using helpers
+    const userContext = buildUserContext(userPreferences);
+    const allergyWarning = getAllergyWarning(userPreferences);
+
     const completionOptions = {
       model: "gpt-4o",
       messages: [
         {
           role: "system",
           content: isMealPlanRequest
-            ? `You are a meal planning assistant. Create a COMPLETE week-long meal plan (Monday through Sunday, 7 days) and return a JSON object that includes both natural language responses and structured meal data. 
+            ? `You are a meal planning assistant. Create a COMPLETE week-long meal plan (Monday through Sunday, 7 days) and return a JSON object that includes both natural language responses and structured meal data.${userContext}
 
 TODAY'S DATE: ${now.toISOString().split("T")[0]}
 CURRENT WEEK: ${currentWeekId} (ISO Week ${currentWeekNum} of ${currentWeekYear})
 
-IMPORTANT: You MUST include ALL 7 days of the week: monday, tuesday, wednesday, thursday, friday, saturday, and sunday.
+IMPORTANT: You MUST include ALL 7 days of the week: monday, tuesday, wednesday, thursday, friday, saturday, and sunday.${allergyWarning}
 
 The response should follow this exact structure:
 {
@@ -381,20 +496,10 @@ Return ONLY the JSON object with all 7 days completed and correct weekId.`
             weekEndDate.setHours(23, 59, 59, 999);
 
             // Fetch images for all meals in parallel
-            const days = [
-              "monday",
-              "tuesday",
-              "wednesday",
-              "thursday",
-              "friday",
-              "saturday",
-              "sunday",
-            ];
-            const mealTypes = ["breakfast", "lunch", "dinner"];
             const imagePromises = [];
 
-            for (const day of days) {
-              for (const mealType of mealTypes) {
+            for (const day of DAYS_OF_WEEK) {
+              for (const mealType of MEAL_TYPES) {
                 if (mealPlan.weekPlan[day]?.[mealType]?.name) {
                   imagePromises.push(
                     getMealImageUrl(mealPlan.weekPlan[day][mealType].name).then(
@@ -504,6 +609,13 @@ exports.streamOpenAI = onRequest(async (req, res) => {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
+    // Fetch user preferences if authenticated using helper
+    const userPreferences = await fetchUserPreferences(req.auth?.uid, "Julie");
+
+    // Build user context and allergy warning using helpers
+    const userContext = buildUserContext(userPreferences);
+    const allergyWarning = getAllergyWarning(userPreferences);
+
     // Set headers for SSE
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -515,7 +627,7 @@ exports.streamOpenAI = onRequest(async (req, res) => {
 
     if (hasMealContext) {
       const { weekday, mealType, mealData, weekNumber } = mealContext;
-      systemPrompt += ` You are helping the user modify their ${mealType} meal for ${weekday} (Week ${weekNumber}).
+      systemPrompt += ` You are helping the user modify their ${mealType} meal for ${weekday} (Week ${weekNumber}).${userContext}${allergyWarning}
       
 Current meal details:
 - Name: ${mealData.name}
@@ -549,9 +661,19 @@ IMPORTANT: Always respond with a JSON object in this exact format:
 Always maintain a similar nutritional profile unless they specifically request otherwise.
 Be concise, helpful, and encouraging in your message.`;
     } else {
-      systemPrompt += ` You help users understand and modify recipes.
-      Be concise, helpful, and encouraging. When users ask about simplifying steps or adjusting recipes,
-      provide clear, practical advice.`;
+      systemPrompt += ` You help users understand and modify recipes.${userContext}${allergyWarning}
+
+When users ask about recipes, cooking instructions, or how to prepare meals:
+- Provide DETAILED, step-by-step instructions
+- Include prep time, cook time, and difficulty level when relevant
+- Break down complex steps into simple, actionable instructions
+- Include helpful tips, techniques, and safety notes
+- Explain why certain steps are important
+- Be thorough but conversational and encouraging
+
+When users ask simple questions or request modifications:
+- Provide clear, practical advice
+- Be concise but helpful`;
     }
 
     const completionOptions = {
@@ -567,7 +689,7 @@ Be concise, helpful, and encouraging in your message.`;
         },
       ],
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 2500,
     };
 
     // For meal modifications, request structured JSON output (non-streaming)
@@ -632,90 +754,6 @@ Be concise, helpful, and encouraging in your message.`;
     if (!res.headersSent) {
       res.status(500).json({ error: error.message || "unknown error" });
     }
-  }
-});
-
-exports.generateRecipe = onCall(async (request) => {
-  const { mealName, ingredients, description } = request.data;
-
-  if (!mealName || !ingredients) {
-    throw new Error("Meal name and ingredients are required");
-  }
-
-  try {
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    const ingredientList = ingredients
-      .map((ing) => `${ing.amount} ${ing.unit} ${ing.item}`)
-      .join(", ");
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `You are a professional chef. Generate a detailed recipe in JSON format.
-
-Return ONLY a JSON object with this structure:
-{
-  "prepTime": "15 minutes",
-  "cookTime": "25 minutes",
-  "servings": 2,
-  "difficulty": "Easy",
-  "steps": [
-    "Detailed step 1 with clear instructions",
-    "Detailed step 2 with clear instructions",
-    "Detailed step 3 with clear instructions",
-    ...
-  ],
-  "tips": [
-    "Helpful cooking tip 1",
-    "Helpful cooking tip 2"
-  ]
-}
-
-IMPORTANT:
-- Include 5-8 detailed, clear steps
-- Each step should be actionable and specific
-- Include exact temperatures, times, and techniques
-- Add 2-3 helpful tips for best results`,
-        },
-        {
-          role: "user",
-          content: `Generate a recipe for: ${mealName}
-            
-Description: ${description || "A delicious meal"}
-Ingredients: ${ingredientList}
-
-Create detailed cooking instructions that will help someone successfully prepare this dish.`,
-        },
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.7,
-    });
-
-    const recipeData = JSON.parse(
-      completion.choices[0]?.message?.content || "{}"
-    );
-
-    logger.info("Recipe generated successfully", { mealName });
-
-    return {
-      success: true,
-      recipe: recipeData,
-    };
-  } catch (error) {
-    logger.error("Recipe generation error:", {
-      message: error.message,
-      stack: error.stack,
-      mealName,
-    });
-
-    throw new Error(
-      `Failed to generate recipe: ${error.message || "unknown error"}`
-    );
   }
 });
 
