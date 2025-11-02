@@ -1,15 +1,10 @@
 
 /* Removed empty ruleset */
 .homePage {
-  display: flex;
-  flex-direction: column;
-  justify-content: center; 
-  align-items: center;
-  width: 100%;
-  min-height: calc(100vh - 64px);
-  background: #f8f9fa;
-  padding: 2rem;
-  transition: margin-left 0.3s ease;
+  padding: 32px 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  margin-top: 64px;
 }
 
   /* Main Content */
@@ -17,10 +12,7 @@
     flex: 1;
     padding: 2rem;
     transition: margin-left 0.3s ease;
-  }
-  
-
-  
+  }  
   .gridContainer {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -31,8 +23,6 @@
     margin: 0 auto;
   }
   
-  
- 
   /* Meal Plan Section - Top Left */
   .mealPlanSection {
     grid-area: 1 / 1 / 2 / 2;
@@ -277,7 +267,7 @@
     bottom: 2rem;
     right: 2rem;
     padding: 1rem 1.5rem;
-    background-color: #4CAF50;
+    background-color: var(--color-primary);
     color: white;
     border: none;
     border-radius: 8px;

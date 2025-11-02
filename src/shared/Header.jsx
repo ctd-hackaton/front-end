@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect  } from "react";
-import { Link, NavLink, useNavigate } from "react-router";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import SignInModal from "../features/SignInModal";
 import SignUpModal from "../features/SignUpModal";
 import styles from "../css/Header.module.css";
 import { useFirestoreDoc } from "../hooks/useFirestoreDoc";
-import userIcon from "../assets/user.svg"
+import { ChefHat, User } from 'lucide-react';
 
 function Header() {
   const { currentUser, logout } = useAuth();
@@ -14,13 +14,13 @@ function Header() {
   const navigate = useNavigate();
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -45,70 +45,76 @@ function Header() {
     return "User";
   };
 
-  const getAvatar = () => {
-    return userDoc?.photoURL || currentUser?.photoURL || userIcon;
-  };
-
   return (
     <header className={styles.mainHeader}>
-      <nav>
+        <a href="/" className={styles.headerLogo}> 
+          <ChefHat className={styles.headerLogoIcon} size={28} />
+          <h1 className={styles.headerLogoText}>Chef Jul</h1>
+        </a>        
+        {currentUser && (
+            <div className={styles.headerCenter}>
+                <NavLink
+                  to="/"
+                  className={({ isActive }) =>
+                    isActive ? `${styles.navLink} ${styles.navLinkActiveHome}` : styles.navLink
+                  }
+                >
+                  Home
+                </NavLink>
+                <NavLink
+                  to="/dashboard"
+                  className={({ isActive }) =>
+                    isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
+                  }
+                >
+                  Dashboard
+                </NavLink>
+            </div>
+        )}
+        <nav className={styles.headerRight}>
         {currentUser ? (
-          <div className={styles.navLinks}>
-            <span>Hello {getName(currentUser)}</span>
-            <NavLink
-              to="/dashboard"
-              className={({ isActive }) =>
-                isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
-              }
+          <div className={styles.headerProfile} ref={dropdownRef}>
+          <span className={styles.navText}>Hello, {getName()}</span>
+
+          <button
+            className={styles.profileButton}
+            onClick={() => setDropdownOpen((prev) => !prev)}
+          >
+            <User size={32} strokeWidth={1.5} color="white" />
+          </button>
+          {dropdownOpen && (
+          <div
+            className={`${styles.profileDropdown} ${
+              dropdownOpen ? styles.open : ""
+            }`}
+          >
+            <div
+              className={styles.dropdownItem}
+              onClick={() => {
+                setDropdownOpen(false);
+                navigate("/userinfo");
+              }}
             >
-              Meal Plan
-            </NavLink>
-            <NavLink
-              to="/chat"
-              className={({ isActive }) =>
-                isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
-              }
+              Profile
+            </div>
+
+            <div
+              className={styles.dropdownItem}
+              onClick={() => {
+                setDropdownOpen(false);
+                navigate("/profile");
+              }}
             >
-              Chat
-            </NavLink>
-            <div className={styles.userMenu} ref={menuRef}>
-              <img
-                src={getAvatar()}
-                alt="User"
-                className={styles.userIcon}
-                onClick={() => setMenuOpen((prev) => !prev)}
-              />
-              {menuOpen && (
-                <div className={styles.dropdown}>
-                  <div className={styles.dropdownHeader}>
-                    Hello, {getName()}
-                  </div>
-                  <div
-                    className={styles.dropdownItem}
-                    onClick={() => {
-                      setMenuOpen(false);
-                      navigate("/userinfo");
-                    }}
-                  >
-                    View Profile
-                  </div>
-                  <div
-                    className={styles.dropdownItem}
-                    onClick={() => {
-                      setMenuOpen(false);
-                      navigate("/profile");
-                    }}
-                  >
-                    Change Account Preferences
-                  </div>
-                  <div className={styles.dropdownItem} onClick={handleLogout}>
-                    Logout
-                  </div>
-                </div>
-              )}
+              Preferences
+            </div>
+
+            <div className={styles.dropdownItem} onClick={handleLogout}>
+              Logout
             </div>
           </div>
-        )  : (
+        )}
+</div>
+        ) : (
           <div>
             <button onClick={() => setShowSignIn(true)}>Sign In</button>
             <button onClick={() => setShowSignUp(true)}>Sign Up</button>
