@@ -85,9 +85,9 @@ The response should follow this exact structure:
   },
   "weekPlan": {
     "monday": {
-      "breakfast": { "name": "", "description": "", "ingredients": [...], "nutrition": {...} },
-      "lunch": { "name": "", "description": "", "ingredients": [...], "nutrition": {...} },
-      "dinner": { "name": "", "description": "", "ingredients": [...], "nutrition": {...} }
+      "breakfast": { "name": "", "description": "", "ingredients": [...], "recipe": {...}, "thumbnail": "", "nutrition": {...} },
+      "lunch": { "name": "", "description": "", "ingredients": [...], "recipe": {...}, "thumbnail": "", "nutrition": {...} },
+      "dinner": { "name": "", "description": "", "ingredients": [...], "recipe": {...}, "thumbnail": "", "nutrition": {...} }
     },
     "tuesday": { "breakfast": {...}, "lunch": {...}, "dinner": {...} },
     "wednesday": { "breakfast": {...}, "lunch": {...}, "dinner": {...} },
@@ -109,9 +109,29 @@ WEEK ID RULES:
 
 Each meal should include:
 - name: The name of the dish
-- description: Brief description of the meal
+- description: Brief description of the meal (2-3 sentences)
 - ingredients: Array of {item, amount, unit, category}
-- nutrition: {calories (number), protein, carbs, fats}
+- recipe: {
+    prepTime: "10 minutes",
+    cookTime: "20 minutes",
+    servings: 2,
+    difficulty: "Easy|Medium|Hard",
+    steps: [
+      "Step 1 description with clear instructions",
+      "Step 2 description with clear instructions",
+      "Step 3 description with clear instructions",
+      ...
+    ],
+    tips: ["Helpful cooking tip 1", "Helpful cooking tip 2"]
+  }
+- thumbnail: A descriptive image prompt for generating a food photo (e.g., "A beautiful bowl of Greek yogurt topped with fresh mixed berries and honey drizzle, natural lighting, food photography")
+- nutrition: {calories (number), protein (grams), carbs (grams), fats (grams)}
+
+IMPORTANT: 
+- Include detailed step-by-step recipe instructions (at least 4-6 steps for most meals)
+- Make thumbnail prompts vivid and suitable for AI image generation
+- Ensure steps are clear, actionable, and in logical cooking order
+- Include prep time, cook time, servings, and difficulty level
 
 Return ONLY the JSON object with all 7 days completed and correct weekId.`
             : "You are a helpful nutrition and wellness assistant. Engage in natural conversation while providing accurate and helpful information about nutrition, health, and wellness.",
