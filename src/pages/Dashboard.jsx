@@ -122,6 +122,12 @@ function Dashboard() {
     setShowChat(true);
   };
 
+  const handleDateSelect = (date) => {
+    setSelected(date);
+    setSelectedMeal(null);
+    setShowChat(false);
+  };
+
   const documentId = useMemo(() => {
     return `${`${getISOWeekYear(selected)}-W${getISOWeek(selected)}`}`;
   }, [selected]);
@@ -204,7 +210,7 @@ function Dashboard() {
               className={styles.dayPicker}
               mode="single"
               selected={selected}
-              onSelect={setSelected}
+              onSelect={handleDateSelect}
               required
               showWeekNumber
               ISOWeek
