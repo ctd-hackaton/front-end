@@ -128,6 +128,36 @@ function Dashboard() {
     setShowChat(false);
   };
 
+  const handleMealUpdate = async (updatedMeal) => {
+    try {
+      const selectedDay = getDay(selected);
+      const weekPlanKeys = Object.keys(data.weekPlan);
+      const dayKey = weekPlanKeys.find(key =>
+        key.toLowerCase() === selectedDay.toLowerCase()
+      );
+
+      if (!dayKey) return;
+
+      const planRef = doc(db, "users", currentUser.uid, "mealPlans", documentId);
+      const updatedPlan = { ...data.weekPlan };
+      updatedPlan[dayKey] = {
+        ...updatedPlan[dayKey],
+        [selectedMeal.mealType]: updatedMeal
+      };
+
+      await setDoc(planRef, { weekPlan: updatedPlan }, { merge: true });
+
+      setData({ ...data, weekPlan: updatedPlan });
+
+      setSelectedMeal({
+        mealType: selectedMeal.mealType,
+        mealData: updatedMeal
+      });
+    } catch (err) {
+      console.error("Error updating meal:", err);
+    }
+  };
+
   const documentId = useMemo(() => {
     return `${`${getISOWeekYear(selected)}-W${getISOWeek(selected)}`}`;
   }, [selected]);
@@ -202,6 +232,7 @@ function Dashboard() {
               day={getDay(selected).toLowerCase()}
               type={selectedMeal.mealType}
               meal={selectedMeal.mealData}
+              onMealUpdate={handleMealUpdate}
             />
           ) : (
             <DayPicker

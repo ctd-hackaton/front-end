@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { streamOpenAIUrl } from "../utils/firebase";
 import ChatUI from "../components/ChatUI";
 /**
@@ -41,8 +41,6 @@ import ChatUI from "../components/ChatUI";
 // };
 
 function SmallChat({ week, day, type, meal, onMealUpdate }) {
-  const [updatedMeal, setUpdatedMeal] = useState(null);
-
   const mealContext = useMemo(
     () =>
       week && day && type && meal
@@ -55,8 +53,7 @@ function SmallChat({ week, day, type, meal, onMealUpdate }) {
         : null,
     [week, day, type, meal]
   );
-  // DELETEME:
-  console.log(updatedMeal);
+
   const handleSend = useCallback(
     async (messageText, _, onMessageUpdate) => {
       if (!streamOpenAIUrl) {
@@ -111,14 +108,11 @@ function SmallChat({ week, day, type, meal, onMealUpdate }) {
               // Handle structured meal data
               if (parsed.type === "structured" && parsed.updatedMeal) {
                 structuredData = parsed.updatedMeal;
-                setUpdatedMeal(parsed.updatedMeal);
 
-                // Call parent callback if provided
+                // Call parent callback if provided - this updates Firestore and UI immediately
                 if (onMealUpdate) {
                   onMealUpdate(parsed.updatedMeal);
                 }
-
-                console.log("Updated meal data:", parsed.updatedMeal);
               }
             } catch (error) {
               console.log(error);
