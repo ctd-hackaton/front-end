@@ -3,6 +3,7 @@ const { onCall, onRequest } = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const OpenAI = require("openai");
 const admin = require("firebase-admin");
+const { getISOWeek, getISOWeekYear } = require("date-fns");
 
 if (!admin.apps || !admin.apps.length) {
   try {
@@ -11,16 +12,6 @@ if (!admin.apps || !admin.apps.length) {
 }
 
 const dbAdmin = admin.firestore();
-
-function getWeekNumber(date) {
-  const d = new Date(
-    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
-  );
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-}
 
 exports.callOpenAI = onCall(async (request) => {
   const { message } = request.data;
@@ -56,6 +47,13 @@ exports.callOpenAI = onCall(async (request) => {
     ).toString();
     const isMealPlanRequest = intentContent.toLowerCase().includes("true");
 
+    const now = new Date();
+    const currentWeekYear = getISOWeekYear(now);
+    const currentWeekNum = getISOWeek(now);
+    const currentWeekId = `${currentWeekYear}-W${String(
+      currentWeekNum
+    ).padStart(2, "0")}`;
+
     const completionOptions = {
       model: "gpt-4o",
       messages: [
@@ -64,10 +62,14 @@ exports.callOpenAI = onCall(async (request) => {
           content: isMealPlanRequest
             ? `You are a meal planning assistant. Create a COMPLETE week-long meal plan (Monday through Sunday, 7 days) and return a JSON object that includes both natural language responses and structured meal data. 
 
+TODAY'S DATE: ${now.toISOString().split("T")[0]}
+CURRENT WEEK: ${currentWeekId} (ISO Week ${currentWeekNum} of ${currentWeekYear})
+
 IMPORTANT: You MUST include ALL 7 days of the week: monday, tuesday, wednesday, thursday, friday, saturday, and sunday.
 
 The response should follow this exact structure:
 {
+  "weekId": "YYYY-W##",
   "text": {
     "weekOverview": "A friendly overview of the week's meal plan, highlighting variety and key features",
     "dailyDescription": {
@@ -96,13 +98,22 @@ The response should follow this exact structure:
   }
 }
 
+WEEK ID RULES:
+- If user doesn't mention a week: use "${currentWeekId}"
+- If user says "next week": use "${currentWeekYear}-W${String(
+                currentWeekNum + 1
+              ).padStart(2, "0")}"
+- If user says "week 46" or "W46": use "${currentWeekYear}-W46"
+- If user says "week 1 of 2026": use "2026-W01"
+- Always format as "YYYY-W##" (e.g., "2025-W44")
+
 Each meal should include:
 - name: The name of the dish
 - description: Brief description of the meal
 - ingredients: Array of {item, amount, unit, category}
 - nutrition: {calories (number), protein, carbs, fats}
 
-Return ONLY the JSON object with all 7 days completed.`
+Return ONLY the JSON object with all 7 days completed and correct weekId.`
             : "You are a helpful nutrition and wellness assistant. Engage in natural conversation while providing accurate and helpful information about nutrition, health, and wellness.",
         },
         {
@@ -143,27 +154,23 @@ Return ONLY the JSON object with all 7 days completed.`
 
         if (userId) {
           try {
-            const now = new Date();
+            const weekId = mealPlan.weekId || currentWeekId;
+            const [yearStr, weekStr] = weekId.split("-W");
+            const year = parseInt(yearStr);
+            const weekNumber = parseInt(weekStr);
+            const jan4 = new Date(year, 0, 4);
+            const jan4Day = jan4.getDay() || 7;
+            const jan4Monday = new Date(jan4);
+            jan4Monday.setDate(jan4.getDate() - jan4Day + 1);
 
-            // Calculate week metadata
-            // Get the Monday of the current week
-            const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-            const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay; // If Sunday, go back 6 days
-            const weekStartDate = new Date(now);
-            weekStartDate.setDate(now.getDate() + diffToMonday);
+            const weekStartDate = new Date(jan4Monday);
+            weekStartDate.setDate(jan4Monday.getDate() + (weekNumber - 1) * 7);
             weekStartDate.setHours(0, 0, 0, 0);
 
-            // Calculate Sunday (end of week)
             const weekEndDate = new Date(weekStartDate);
             weekEndDate.setDate(weekStartDate.getDate() + 6);
             weekEndDate.setHours(23, 59, 59, 999);
 
-            // Generate week identifier (e.g., "2025-W44")
-            const year = weekStartDate.getFullYear();
-            const weekNumber = getWeekNumber(weekStartDate);
-            const weekId = `${year}-W${String(weekNumber).padStart(2, "0")}`;
-
-            // Use weekId as document ID to prevent duplicates
             const docRef = dbAdmin.doc(`users/${userId}/mealPlans/${weekId}`);
             await docRef.set({
               ...mealPlan,
