@@ -8,6 +8,9 @@ function ChatUI({
   info = "AI-powered assistant",
   placeholder = "Type a message and press Enter to send",
   welcomeMsg = "No messages yet — say hello 👋",
+  showRecipeButton = false,
+  onGenerateRecipes,
+  isGeneratingRecipes = false,
 }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -110,6 +113,19 @@ function ChatUI({
 
         <div ref={messagesEndRef} />
       </div>
+      {showRecipeButton && (
+        <div className={styles.recipeButtonRow}>
+          <button
+            className={styles.recipeButton}
+            onClick={onGenerateRecipes}
+            disabled={isGeneratingRecipes}
+          >
+            {isGeneratingRecipes
+              ? "Starting recipe generation..."
+              : "📖 Create Detailed Recipes"}
+          </button>
+        </div>
+      )}
       <div className={styles.inputRow}>
         <textarea
           ref={inputRef}

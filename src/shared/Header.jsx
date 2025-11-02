@@ -1,11 +1,14 @@
-import { useState, useRef, useEffect  } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { db, functions } from "../utils/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import SignInModal from "../features/SignInModal";
 import SignUpModal from "../features/SignUpModal";
 import styles from "../css/Header.module.css";
 import { useFirestoreDoc } from "../hooks/useFirestoreDoc";
-import { ChefHat, User } from 'lucide-react';
+import { ChefHat, User } from "lucide-react";
 
 function Header() {
   const { currentUser, logout } = useAuth();
@@ -47,73 +50,75 @@ function Header() {
 
   return (
     <header className={styles.mainHeader}>
-        <a href="/" className={styles.headerLogo}> 
-          <ChefHat className={styles.headerLogoIcon} size={28} />
-          <h1 className={styles.headerLogoText}>Chef Jul</h1>
-        </a>        
-        {currentUser && (
-            <div className={styles.headerCenter}>
-                <NavLink
-                  to="/"
-                  className={({ isActive }) =>
-                    isActive ? `${styles.navLink} ${styles.navLinkActiveHome}` : styles.navLink
-                  }
-                >
-                  Home
-                </NavLink>
-                <NavLink
-                  to="/dashboard"
-                  className={({ isActive }) =>
-                    isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
-                  }
-                >
-                  Dashboard
-                </NavLink>
-            </div>
-        )}
-        <nav className={styles.headerRight}>
+      <a href="/" className={styles.headerLogo}>
+        <ChefHat className={styles.headerLogoIcon} size={28} />
+        <h1 className={styles.headerLogoText}>Chef Jul</h1>
+      </a>
+      {currentUser && (
+        <div className={styles.headerCenter}>
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              isActive
+                ? `${styles.navLink} ${styles.navLinkActiveHome}`
+                : styles.navLink
+            }
+          >
+            Home
+          </NavLink>
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
+            }
+          >
+            Dashboard
+          </NavLink>
+        </div>
+      )}
+      <nav className={styles.headerRight}>
         {currentUser ? (
           <div className={styles.headerProfile} ref={dropdownRef}>
-          <span className={styles.navText}>Hello, {getName()}</span>
+            <span className={styles.navText}>Hello, {getName()}</span>
 
-          <button
-            className={styles.profileButton}
-            onClick={() => setDropdownOpen((prev) => !prev)}
-          >
-            <User size={32} strokeWidth={1.5} color="white" />
-          </button>
-          {dropdownOpen && (
-          <div
-            className={`${styles.profileDropdown} ${
-              dropdownOpen ? styles.open : ""
-            }`}
-          >
-            <div
-              className={styles.dropdownItem}
-              onClick={() => {
-                setDropdownOpen(false);
-                navigate("/userinfo");
-              }}
+            <button
+              className={styles.profileButton}
+              onClick={() => setDropdownOpen((prev) => !prev)}
             >
-              Profile
-            </div>
+              <User size={32} strokeWidth={1.5} color="white" />
+            </button>
+            {dropdownOpen && (
+              <div
+                className={`${styles.profileDropdown} ${
+                  dropdownOpen ? styles.open : ""
+                }`}
+              >
+                <div
+                  className={styles.dropdownItem}
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    navigate("/userinfo");
+                  }}
+                >
+                  Profile
+                </div>
 
-            <div
-              className={styles.dropdownItem}
-              onClick={() => {
-                setDropdownOpen(false);
-                navigate("/profile");
-              }}
-            >
-              Preferences
-            </div>
+                <div
+                  className={styles.dropdownItem}
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    navigate("/profile");
+                  }}
+                >
+                  Preferences
+                </div>
 
-            <div className={styles.dropdownItem} onClick={handleLogout}>
-              Logout
-            </div>
+                <div className={styles.dropdownItem} onClick={handleLogout}>
+                  Logout
+                </div>
+              </div>
+            )}
           </div>
-        )}
-</div>
         ) : (
           <div>
             <button onClick={() => setShowSignIn(true)}>Sign In</button>

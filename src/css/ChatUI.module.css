@@ -115,3 +115,35 @@
   margin-top: 0.5rem;
   flex-shrink: 0;
 }
+
+.recipeButtonRow {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0;
+  flex-shrink: 0;
+}
+
+.recipeButton {
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-lg);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.recipeButton:hover {
+  background: #5558dd;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.recipeButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}

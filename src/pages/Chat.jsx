@@ -1,5 +1,5 @@
-import { useCallback, useMemo } from "react";
-import { useLoaderData } from "react-router-dom";
+import { useCallback, useMemo, useState } from "react";
+import { useLoaderData, useNavigate } from "react-router-dom";
 import { functions } from "../utils/firebase";
 import { httpsCallable } from "firebase/functions";
 import { useAuth } from "../hooks/useAuth";
@@ -9,6 +9,9 @@ import ChatUI from "../components/ChatUI";
 function Chat() {
   const { currentUser } = useAuth();
   const { messages } = useLoaderData();
+  const navigate = useNavigate();
+  const [latestMealPlan, setLatestMealPlan] = useState(null);
+  const [isGeneratingRecipes, setIsGeneratingRecipes] = useState(false);
 
   const initialMessages = useMemo(() => messages, [messages]);
 
@@ -33,6 +36,12 @@ function Chat() {
             .join("\n\n")}\n\n--- Nutrition Summary ---\n${
             text.nutritionSummary
           }`;
+
+          // Store the meal plan info for recipe generation
+          setLatestMealPlan({
+            weekId: result.data.mealPlan.weekId,
+            userId: currentUser.uid,
+          });
         }
 
         const assistantMsg = {
@@ -56,6 +65,35 @@ function Chat() {
     [currentUser]
   );
 
+  const handleGenerateRecipes = async () => {
+    if (!latestMealPlan) return;
+
+    setIsGeneratingRecipes(true);
+    const startRecipeGeneration = httpsCallable(
+      functions,
+      "startRecipeGeneration"
+    );
+
+    try {
+      await startRecipeGeneration({
+        weekId: latestMealPlan.weekId,
+      });
+
+      // Clear the meal plan state so button doesn't show again
+      setLatestMealPlan(null);
+      setIsGeneratingRecipes(false);
+
+      // Navigate to dashboard
+      navigate("/dashboard", {
+        state: { generatingRecipes: true, weekId: latestMealPlan.weekId },
+      });
+    } catch (error) {
+      console.error("Failed to start recipe generation:", error);
+      alert(error.message || "Failed to start recipe generation");
+      setIsGeneratingRecipes(false);
+    }
+  };
+
   return (
     <ChatUI
       onSend={handleSend}
@@ -67,6 +105,9 @@ function Chat() {
 I can help you create delicious, balanced meals for the week or answer any culinary questions you might have.
 Try asking something like:
 "Create a low-carb Italian meal plan for this week." 🍝`}
+      showRecipeButton={!!latestMealPlan && !isGeneratingRecipes}
+      onGenerateRecipes={handleGenerateRecipes}
+      isGeneratingRecipes={isGeneratingRecipes}
     />
   );
 }

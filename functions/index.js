@@ -32,13 +32,41 @@ async function generateRecipesForMealPlan(userId, weekId, weekPlan) {
 
   logger.info("Starting background recipe generation", { weekId, userId });
 
+  const docRef = dbAdmin.doc(`users/${userId}/mealPlans/${weekId}`);
+
+  // Build list of all meals to process
+  const mealsToProcess = [];
   for (const day of days) {
     for (const mealType of mealTypes) {
       const meal = weekPlan[day]?.[mealType];
-      if (!meal || !meal.name || !meal.ingredients) {
-        continue;
+      if (meal && meal.name && meal.ingredients) {
+        mealsToProcess.push({ day, mealType, meal });
       }
+    }
+  }
 
+  // Process in batches of 5 for optimal performance
+  const BATCH_SIZE = 5;
+  let completedCount = 0;
+
+  for (let i = 0; i < mealsToProcess.length; i += BATCH_SIZE) {
+    // Check if cancelled before each batch
+    const currentDoc = await docRef.get();
+    const status = currentDoc.data()?.recipeGenerationStatus;
+
+    if (status?.cancelled) {
+      logger.info("Recipe generation cancelled by user", { weekId });
+      await docRef.update({
+        "recipeGenerationStatus.isGenerating": false,
+        "recipeGenerationStatus.cancelledAt": admin.firestore.Timestamp.now(),
+      });
+      return;
+    }
+
+    const batch = mealsToProcess.slice(i, i + BATCH_SIZE);
+
+    // Process batch in parallel
+    const batchPromises = batch.map(async ({ day, mealType, meal }) => {
       try {
         const ingredientList = meal.ingredients
           .map((ing) => `${ing.amount} ${ing.unit} ${ing.item}`)
@@ -94,9 +122,10 @@ Create detailed cooking instructions that will help someone successfully prepare
         );
 
         // Update the meal with recipe in Firestore
-        const mealPath = `users/${userId}/mealPlans/${weekId}`;
-        await dbAdmin.doc(mealPath).update({
+        await docRef.update({
           [`weekPlan.${day}.${mealType}.recipe`]: recipeData,
+          "recipeGenerationStatus.progress":
+            admin.firestore.FieldValue.increment(1),
         });
 
         logger.info("Recipe generated and saved", {
@@ -106,8 +135,7 @@ Create detailed cooking instructions that will help someone successfully prepare
           mealName: meal.name,
         });
 
-        // Small delay to avoid rate limiting
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        return { success: true, day, mealType };
       } catch (error) {
         logger.error("Failed to generate recipe for meal:", {
           error: error.message,
@@ -116,10 +144,35 @@ Create detailed cooking instructions that will help someone successfully prepare
           mealType,
           mealName: meal.name,
         });
-        // Continue with next meal even if one fails
+        // Increment progress even on failure so UI doesn't get stuck
+        await docRef.update({
+          "recipeGenerationStatus.progress":
+            admin.firestore.FieldValue.increment(1),
+        });
+        return { success: false, day, mealType, error: error.message };
       }
+    });
+
+    // Wait for entire batch to complete
+    const results = await Promise.all(batchPromises);
+    completedCount += results.length;
+
+    logger.info(`Batch completed: ${completedCount}/${mealsToProcess.length}`, {
+      weekId,
+      batchResults: results,
+    });
+
+    // Small delay between batches to avoid rate limiting
+    if (i + BATCH_SIZE < mealsToProcess.length) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
+
+  // Mark as complete
+  await docRef.update({
+    "recipeGenerationStatus.isGenerating": false,
+    "recipeGenerationStatus.completedAt": admin.firestore.Timestamp.now(),
+  });
 
   logger.info("Background recipe generation completed", { weekId, userId });
 }
@@ -300,16 +353,6 @@ Return ONLY the JSON object with all 7 days completed and correct weekId.`
               updatedAt: admin.firestore.Timestamp.now(),
             });
             logger.info("Meal plan saved to Firestore", { weekId, userId });
-
-            // Generate recipes in background (don't await)
-            generateRecipesForMealPlan(userId, weekId, mealPlan.weekPlan).catch(
-              (err) => {
-                logger.error("Background recipe generation failed:", {
-                  error: err.message,
-                  weekId,
-                });
-              }
-            );
           } catch (err) {
             logger.error("Failed to save meal plan to Firestore:", {
               error: err.message,
@@ -591,4 +634,71 @@ Create detailed cooking instructions that will help someone successfully prepare
       `Failed to generate recipe: ${error.message || "unknown error"}`
     );
   }
+});
+
+exports.startRecipeGeneration = onCall(
+  { timeoutSeconds: 60, memory: "256MiB" },
+  async (request) => {
+    const { weekId } = request.data;
+    const userId = request.auth?.uid;
+
+    if (!userId || !weekId) {
+      throw new Error("weekId and authenticated user required");
+    }
+
+    const docRef = dbAdmin.doc(`users/${userId}/mealPlans/${weekId}`);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      throw new Error("Meal plan not found");
+    }
+
+    // Check if already generating
+    const status = doc.data().recipeGenerationStatus;
+    if (status?.isGenerating) {
+      throw new Error("Recipe generation already in progress");
+    }
+
+    // Set initial status
+    await docRef.update({
+      "recipeGenerationStatus.isGenerating": true,
+      "recipeGenerationStatus.progress": 0,
+      "recipeGenerationStatus.total": 21,
+      "recipeGenerationStatus.startedAt": admin.firestore.Timestamp.now(),
+      "recipeGenerationStatus.completedAt": null,
+      "recipeGenerationStatus.cancelled": false,
+    });
+
+    logger.info("Recipe generation started", { weekId, userId });
+
+    // Trigger background generation (don't await)
+    generateRecipesForMealPlan(userId, weekId, doc.data().weekPlan).catch(
+      (err) => {
+        logger.error("Background recipe generation failed:", {
+          error: err.message,
+          weekId,
+        });
+      }
+    );
+
+    return { success: true, weekId };
+  }
+);
+
+exports.cancelRecipeGeneration = onCall(async (request) => {
+  const { weekId } = request.data;
+  const userId = request.auth?.uid;
+
+  if (!userId || !weekId) {
+    throw new Error("weekId and authenticated user required");
+  }
+
+  await dbAdmin.doc(`users/${userId}/mealPlans/${weekId}`).update({
+    "recipeGenerationStatus.cancelled": true,
+    "recipeGenerationStatus.cancelledAt": admin.firestore.Timestamp.now(),
+  });
+
+  logger.info("Recipe generation cancelled", { weekId, userId });
+
+  return { success: true };
 });
