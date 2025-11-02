@@ -44,6 +44,7 @@ function App() {
           ),
           loader: chatLoader,
         },
+        // DELETEME:
         {
           path: "smallChat",
           element: (
