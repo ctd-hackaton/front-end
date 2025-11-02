@@ -13,6 +13,210 @@ if (!admin.apps || !admin.apps.length) {
 
 const dbAdmin = admin.firestore();
 
+// Helper function to get meal image URL from Foodish API
+// Simple API call - returns random food image URL
+async function getMealImageUrl(mealName) {
+  const https = require("https");
+
+  return new Promise((resolve) => {
+    const req = https.get(
+      "https://foodish-api.com/api/",
+      { timeout: 3000 },
+      (res) => {
+        let data = "";
+
+        res.on("data", (chunk) => {
+          data += chunk;
+        });
+
+        res.on("end", () => {
+          try {
+            const response = JSON.parse(data);
+            resolve(
+              response.image || "https://via.placeholder.com/600x400?text=Food"
+            );
+          } catch (e) {
+            resolve("https://via.placeholder.com/600x400?text=Food");
+          }
+        });
+      }
+    );
+
+    req.on("error", () => {
+      resolve("https://via.placeholder.com/600x400?text=Food");
+    });
+
+    req.on("timeout", () => {
+      req.destroy();
+      resolve("https://via.placeholder.com/600x400?text=Food");
+    });
+  });
+}
+
+// Helper function to generate recipes for all meals in a week plan
+async function generateRecipesForMealPlan(userId, weekId, weekPlan) {
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  const days = [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ];
+  const mealTypes = ["breakfast", "lunch", "dinner"];
+
+  logger.info("Starting background recipe generation", { weekId, userId });
+
+  const docRef = dbAdmin.doc(`users/${userId}/mealPlans/${weekId}`);
+
+  // Build list of all meals to process
+  const mealsToProcess = [];
+  for (const day of days) {
+    for (const mealType of mealTypes) {
+      const meal = weekPlan[day]?.[mealType];
+      if (meal && meal.name && meal.ingredients) {
+        mealsToProcess.push({ day, mealType, meal });
+      }
+    }
+  }
+
+  // Process in batches of 5 for optimal performance
+  const BATCH_SIZE = 5;
+  let completedCount = 0;
+
+  for (let i = 0; i < mealsToProcess.length; i += BATCH_SIZE) {
+    // Check if cancelled before each batch
+    const currentDoc = await docRef.get();
+    const status = currentDoc.data()?.recipeGenerationStatus;
+
+    if (status?.cancelled) {
+      logger.info("Recipe generation cancelled by user", { weekId });
+      await docRef.update({
+        "recipeGenerationStatus.isGenerating": false,
+        "recipeGenerationStatus.cancelledAt": admin.firestore.Timestamp.now(),
+      });
+      return;
+    }
+
+    const batch = mealsToProcess.slice(i, i + BATCH_SIZE);
+
+    // Process batch in parallel
+    const batchPromises = batch.map(async ({ day, mealType, meal }) => {
+      try {
+        const ingredientList = meal.ingredients
+          .map((ing) => `${ing.amount} ${ing.unit} ${ing.item}`)
+          .join(", ");
+
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are a professional chef. Generate a detailed recipe in JSON format.
+
+Return ONLY a JSON object with this structure:
+{
+  "prepTime": "15 minutes",
+  "cookTime": "25 minutes",
+  "servings": 2,
+  "difficulty": "Easy",
+  "steps": [
+    "Detailed step 1 with clear instructions",
+    "Detailed step 2 with clear instructions",
+    "Detailed step 3 with clear instructions",
+    ...
+  ],
+  "tips": [
+    "Helpful cooking tip 1",
+    "Helpful cooking tip 2"
+  ]
+}
+
+IMPORTANT:
+- Include 5-8 detailed, clear steps
+- Each step should be actionable and specific
+- Include exact temperatures, times, and techniques
+- Add 2-3 helpful tips for best results`,
+            },
+            {
+              role: "user",
+              content: `Generate a recipe for: ${meal.name}
+            
+Description: ${meal.description || "A delicious meal"}
+Ingredients: ${ingredientList}
+
+Create detailed cooking instructions that will help someone successfully prepare this dish.`,
+            },
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.7,
+        });
+
+        const recipeData = JSON.parse(
+          completion.choices[0]?.message?.content || "{}"
+        );
+
+        // Update the meal with recipe in Firestore (image already exists from meal plan creation)
+        await docRef.update({
+          [`weekPlan.${day}.${mealType}.recipe`]: recipeData,
+          "recipeGenerationStatus.progress":
+            admin.firestore.FieldValue.increment(1),
+        });
+
+        logger.info("Recipe generated and saved", {
+          weekId,
+          day,
+          mealType,
+          mealName: meal.name,
+        });
+
+        return { success: true, day, mealType };
+      } catch (error) {
+        logger.error("Failed to generate recipe for meal:", {
+          error: error.message,
+          weekId,
+          day,
+          mealType,
+          mealName: meal.name,
+        });
+        // Increment progress even on failure so UI doesn't get stuck
+        await docRef.update({
+          "recipeGenerationStatus.progress":
+            admin.firestore.FieldValue.increment(1),
+        });
+        return { success: false, day, mealType, error: error.message };
+      }
+    });
+
+    // Wait for entire batch to complete
+    const results = await Promise.all(batchPromises);
+    completedCount += results.length;
+
+    logger.info(`Batch completed: ${completedCount}/${mealsToProcess.length}`, {
+      weekId,
+      batchResults: results,
+    });
+
+    // Small delay between batches to avoid rate limiting
+    if (i + BATCH_SIZE < mealsToProcess.length) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+
+  // Mark as complete
+  await docRef.update({
+    "recipeGenerationStatus.isGenerating": false,
+    "recipeGenerationStatus.completedAt": admin.firestore.Timestamp.now(),
+  });
+
+  logger.info("Background recipe generation completed", { weekId, userId });
+}
+
 exports.callOpenAI = onCall(async (request) => {
   const { message } = request.data;
 
@@ -109,9 +313,14 @@ WEEK ID RULES:
 
 Each meal should include:
 - name: The name of the dish
-- description: Brief description of the meal
+- description: Brief description of the meal (2-3 sentences)
 - ingredients: Array of {item, amount, unit, category}
-- nutrition: {calories (number), protein, carbs, fats}
+- nutrition: {calories (number), protein (grams), carbs (grams), fats (grams)}
+
+IMPORTANT: 
+- Do NOT include recipe field - recipes will be generated separately
+- Focus on meal variety, nutritional balance, and interesting ingredient combinations
+- Keep descriptions appetizing and informative
 
 Return ONLY the JSON object with all 7 days completed and correct weekId.`
             : "You are a helpful nutrition and wellness assistant. Engage in natural conversation while providing accurate and helpful information about nutrition, health, and wellness.",
@@ -171,6 +380,45 @@ Return ONLY the JSON object with all 7 days completed and correct weekId.`
             weekEndDate.setDate(weekStartDate.getDate() + 6);
             weekEndDate.setHours(23, 59, 59, 999);
 
+            // Fetch images for all meals in parallel
+            const days = [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday",
+              "saturday",
+              "sunday",
+            ];
+            const mealTypes = ["breakfast", "lunch", "dinner"];
+            const imagePromises = [];
+
+            for (const day of days) {
+              for (const mealType of mealTypes) {
+                if (mealPlan.weekPlan[day]?.[mealType]?.name) {
+                  imagePromises.push(
+                    getMealImageUrl(mealPlan.weekPlan[day][mealType].name).then(
+                      (imageUrl) => ({
+                        day,
+                        mealType,
+                        imageUrl,
+                      })
+                    )
+                  );
+                }
+              }
+            }
+
+            // Wait for all images to be fetched
+            const imageResults = await Promise.all(imagePromises);
+
+            // Add image URLs to meal plan
+            for (const { day, mealType, imageUrl } of imageResults) {
+              if (mealPlan.weekPlan[day]?.[mealType]) {
+                mealPlan.weekPlan[day][mealType].imageUrl = imageUrl;
+              }
+            }
+
             const docRef = dbAdmin.doc(`users/${userId}/mealPlans/${weekId}`);
             await docRef.set({
               ...mealPlan,
@@ -183,8 +431,17 @@ Return ONLY the JSON object with all 7 days completed and correct weekId.`
               createdAt: admin.firestore.Timestamp.now(),
               updatedAt: admin.firestore.Timestamp.now(),
             });
+            logger.info("Meal plan saved to Firestore with images", {
+              weekId,
+              userId,
+              imageCount: imageResults.length,
+            });
           } catch (err) {
-            console.error("Failed to save meal plan to Firestore:", err);
+            logger.error("Failed to save meal plan to Firestore:", {
+              error: err.message,
+              stack: err.stack,
+              weekId,
+            });
           }
         }
 
@@ -212,11 +469,11 @@ Return ONLY the JSON object with all 7 days completed and correct weekId.`
       structured: false,
     };
   } catch (error) {
-    logger.error("OpenAI error:", error);
-    console.error(
-      "OpenAI error stack:",
-      error && error.stack ? error.stack : error
-    );
+    logger.error("OpenAI error:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
 
     throw new Error(
       `Failed to call OpenAI: ${error.message || "unknown error"}`
@@ -376,4 +633,155 @@ Be concise, helpful, and encouraging in your message.`;
       res.status(500).json({ error: error.message || "unknown error" });
     }
   }
+});
+
+exports.generateRecipe = onCall(async (request) => {
+  const { mealName, ingredients, description } = request.data;
+
+  if (!mealName || !ingredients) {
+    throw new Error("Meal name and ingredients are required");
+  }
+
+  try {
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const ingredientList = ingredients
+      .map((ing) => `${ing.amount} ${ing.unit} ${ing.item}`)
+      .join(", ");
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are a professional chef. Generate a detailed recipe in JSON format.
+
+Return ONLY a JSON object with this structure:
+{
+  "prepTime": "15 minutes",
+  "cookTime": "25 minutes",
+  "servings": 2,
+  "difficulty": "Easy",
+  "steps": [
+    "Detailed step 1 with clear instructions",
+    "Detailed step 2 with clear instructions",
+    "Detailed step 3 with clear instructions",
+    ...
+  ],
+  "tips": [
+    "Helpful cooking tip 1",
+    "Helpful cooking tip 2"
+  ]
+}
+
+IMPORTANT:
+- Include 5-8 detailed, clear steps
+- Each step should be actionable and specific
+- Include exact temperatures, times, and techniques
+- Add 2-3 helpful tips for best results`,
+        },
+        {
+          role: "user",
+          content: `Generate a recipe for: ${mealName}
+            
+Description: ${description || "A delicious meal"}
+Ingredients: ${ingredientList}
+
+Create detailed cooking instructions that will help someone successfully prepare this dish.`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
+
+    const recipeData = JSON.parse(
+      completion.choices[0]?.message?.content || "{}"
+    );
+
+    logger.info("Recipe generated successfully", { mealName });
+
+    return {
+      success: true,
+      recipe: recipeData,
+    };
+  } catch (error) {
+    logger.error("Recipe generation error:", {
+      message: error.message,
+      stack: error.stack,
+      mealName,
+    });
+
+    throw new Error(
+      `Failed to generate recipe: ${error.message || "unknown error"}`
+    );
+  }
+});
+
+exports.startRecipeGeneration = onCall(
+  { timeoutSeconds: 60, memory: "256MiB" },
+  async (request) => {
+    const { weekId } = request.data;
+    const userId = request.auth?.uid;
+
+    if (!userId || !weekId) {
+      throw new Error("weekId and authenticated user required");
+    }
+
+    const docRef = dbAdmin.doc(`users/${userId}/mealPlans/${weekId}`);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      throw new Error("Meal plan not found");
+    }
+
+    // Check if already generating
+    const status = doc.data().recipeGenerationStatus;
+    if (status?.isGenerating) {
+      throw new Error("Recipe generation already in progress");
+    }
+
+    // Set initial status
+    await docRef.update({
+      "recipeGenerationStatus.isGenerating": true,
+      "recipeGenerationStatus.progress": 0,
+      "recipeGenerationStatus.total": 21,
+      "recipeGenerationStatus.startedAt": admin.firestore.Timestamp.now(),
+      "recipeGenerationStatus.completedAt": null,
+      "recipeGenerationStatus.cancelled": false,
+    });
+
+    logger.info("Recipe generation started", { weekId, userId });
+
+    // Trigger background generation (don't await)
+    generateRecipesForMealPlan(userId, weekId, doc.data().weekPlan).catch(
+      (err) => {
+        logger.error("Background recipe generation failed:", {
+          error: err.message,
+          weekId,
+        });
+      }
+    );
+
+    return { success: true, weekId };
+  }
+);
+
+exports.cancelRecipeGeneration = onCall(async (request) => {
+  const { weekId } = request.data;
+  const userId = request.auth?.uid;
+
+  if (!userId || !weekId) {
+    throw new Error("weekId and authenticated user required");
+  }
+
+  await dbAdmin.doc(`users/${userId}/mealPlans/${weekId}`).update({
+    "recipeGenerationStatus.cancelled": true,
+    "recipeGenerationStatus.cancelledAt": admin.firestore.Timestamp.now(),
+  });
+
+  logger.info("Recipe generation cancelled", { weekId, userId });
+
+  return { success: true };
 });

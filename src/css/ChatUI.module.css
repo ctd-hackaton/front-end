@@ -70,6 +70,22 @@
   text-align: left;
 }
 
+.thinkingMessage {
+  font-style: italic;
+  opacity: 0.8;
+  animation: fadeInOut 2.5s ease-in-out infinite;
+}
+
+@keyframes fadeInOut {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .inputRow {
   display: flex;
   gap: 0.5rem;
@@ -114,4 +130,36 @@
   min-height: 1.25rem;
   margin-top: 0.5rem;
   flex-shrink: 0;
+}
+
+.recipeButtonRow {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0;
+  flex-shrink: 0;
+}
+
+.recipeButton {
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-lg);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.recipeButton:hover {
+  background: #5558dd;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.recipeButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }

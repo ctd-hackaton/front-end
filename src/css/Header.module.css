@@ -18,9 +18,9 @@
 .mainHeader h1 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--text);
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 .headerCenter {
@@ -28,7 +28,13 @@
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 1.5rem; 
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.headerNavLinks {
+  display: flex;
+  gap: 1.5rem;
   align-items: center;
 }
 .navLinks {
@@ -44,171 +50,306 @@
 }
 
 .navLink:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text);
-  }
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
 
 .navLinkActiveHome {
-    background: var(--color-primary); 
-    color: var(--text); 
-    font-weight: 600;
-  }
+  background: var(--color-primary);
+  color: var(--text);
+  font-weight: 600;
+}
 
 .navLinkActiveHome:hover {
-    background: var(--color-primary-600);
-    color: var(--text);
-  }
-.navLink.active { 
-    background: none; 
-    color: var(--text); 
-    font-weight: 600;
-    border-bottom: 2px solid var(--color-primary); 
-    border-radius: 0; 
-  }
-.navLink.active:hover {
-    background: none;
-  }
-  .headerRight {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    position: relative;
-    z-index: 10;
-  }
-  
-  .authButtons {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-  }
-  
-   
-  /* Profile section (right side) */
-  
-  .headerProfile {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    position: relative;
-  }
-  
-  .navText {
-    color: var(--text);
-    font-size: 0.9rem;
-  }
-  
-  .profileButton {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--color-accent);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: white;
-    fill: white;
-  }
-  
-  .profileButton:hover {
-    border-color: rgba(255, 255, 255, 0.4);
-  }
-  
-  .profileDropdown {
-    all: unset;
-    position: absolute;
-    top: calc(100% + 8px);
-    background: var(--bg);
-    right: 0;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    min-width: 200px;
-    overflow: hidden;
-    opacity: 0;
-    transform: translateY(-10px);
-    pointer-events: none;
-    transition: all 0.25s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 100;
-  }
-  
-  .profileDropdown.open {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-
-  .profileButton img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-    display: block;
-  }
-  
-
-  .dropdownItem {
-    display: block;
-    padding: 10px 16px;
-    color: var(--text);
-    text-decoration: none;
-    transition: all 0.2s ease;
-    cursor: pointer;
-  }
-  
-  .dropdownItem:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--color-primary);
-  }
-  .navLinks button {
+  background: var(--color-primary-600);
+  color: var(--text);
+}
+.navLink.active {
   background: none;
-  border: 1px solid #fff;
-  color: #fff;
+  color: var(--text);
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-primary);
+  border-radius: 0;
+}
+.navLink.active:hover {
+  background: none;
+}
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  z-index: 10;
+}
+
+.authButtons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Profile section (right side) */
+
+.headerProfile {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+}
+
+.navText {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.profileButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+  fill: white;
+}
+
+.profileButton:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.profileDropdown {
+  all: unset;
+  position: absolute;
+  top: calc(100% + 8px);
+  background: var(--bg);
+  right: 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  min-width: 200px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: all 0.25s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 100;
+}
+
+.profileDropdown.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.profileButton img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.dropdownItem {
+  display: block;
+  padding: 10px 16px;
+  color: var(--text);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.dropdownItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-primary);
+}
+.navLinks button {
+  background: none;
+  border: 1px solid var(--muted-text);
+  color: var(--text);
   padding: 0.5rem 1rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.2s ease;
 }
 
-.navLinks button:hover {
-  background: #fff;
-  color: #000;
+.mainHeader nav button:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--bg);
+}
+
+.recipeProgress {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  background: var(--sec-bg);
+  border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  box-shadow: var(--shadow-sm);
+  z-index: 999;
+  animation: slideDown 0.3s ease;
+}
+
+.recipeStatusContainer {
+  min-width: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recipeProgressInline {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--sec-bg);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.3s ease;
+}
+
+.recipeCompleteInline {
+  padding: 0.5rem 1rem;
+  background: var(--sec-bg);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.progressContent {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.progressText {
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.progressBar {
+  flex: 1;
+  min-width: 150px;
+  height: 6px;
+  background: rgba(16, 185, 129, 0.15);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 0.3s ease;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+
+.cancelButton {
+  background: transparent;
+  border: 1px solid var(--muted-text);
+  color: var(--text);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.cancelButton:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.recipeComplete {
+  position: fixed;
+  top: var(--header-height);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--sec-bg);
+  border: 1px solid var(--color-primary);
+  backdrop-filter: blur(10px);
+  color: var(--text);
+  padding: 1rem 2rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: 999;
+  animation: slideDown 0.3s ease;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
 .navLinks a {
-  color: #fff;
+  color: var(--text);
   text-decoration: none;
   padding: 0.5rem 1rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   transition: all 0.2s ease;
 }
 
 .navLinks a:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(16, 185, 129, 0.1);
 }
 
 .navLink {
-  color: #fff;
+  color: var(--text);
   text-decoration: none;
   padding: 0.5rem 1rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   transition: all 0.2s ease;
 }
 
 .navLink:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(16, 185, 129, 0.1);
 }
 
 .navLink.active {
-  background: rgba(87, 87, 87, 0.2);
+  background: rgba(16, 185, 129, 0.2);
   font-weight: 600;
+  color: var(--color-primary);
 }
 
 .navLinks span {
-  color: #fff;
+  color: var(--text);
   font-size: 0.9rem;
   display: block;
 }
