@@ -34,6 +34,13 @@
   border-bottom: 1px solid var(--muted-text);
   font-size: 0.9rem;
   min-height: 40px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  padding-right: 1rem;
+}
+
+.mealRow:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .mealRow:last-child {

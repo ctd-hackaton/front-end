@@ -1,0 +1,130 @@
+.container {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: var(--container-gap);
+  width: 100%;
+  min-width: 400px;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--container-gap);
+  padding-bottom: var(--container-gap);
+  border-bottom: 1px solid var(--sec-bg);
+}
+
+.mealTitleContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.mealTitle, .mealName {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.mealName {
+  color: var(--text);
+}
+
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.iconButton {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s;
+}
+
+.iconButton svg {
+  width: 24px;
+  height: 24px;
+}
+
+.iconButton:hover {
+  background-color: var(--sec-bg);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--container-gap);
+}
+
+.description {
+  font-size: 1.1rem;
+  color: var(--text);
+  margin: 0;
+  padding: 0.5rem 0;
+}
+
+.ingredientsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ingredient {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding:  0.75rem;
+  background: var(--sec-bg);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+}
+
+.ingredientDetails {
+  color: var(--muted-text);
+  font-size: 0.875rem;
+}
+
+.nutritionGrid {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.nutritionItem {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  background: var(--sec-bg);
+  border-radius: var(--radius-sm);
+  flex: 1;
+  min-width: 120px;
+}
+
+.nutritionLabel {
+  font-size: 0.875rem;
+  color: var(--muted-text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nutritionValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+}
+

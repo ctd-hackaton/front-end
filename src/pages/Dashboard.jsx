@@ -6,6 +6,7 @@ import { DayPicker } from "react-day-picker";
 import { getISOWeekYear, getISOWeek } from 'date-fns';
 import DailyMealPlan from "../components/DailyMealPlan";
 import WeeklyStats from "../components/WeeklyStats";
+import MealDetails from "../components/MealDetails";
 import "react-day-picker/style.css";
 
 import styles from "../css/dashboard/Dashboard.module.css";
@@ -21,7 +22,16 @@ function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedMeal, setSelectedMeal] = useState(null);
   const { currentUser } = useAuth();
+
+  const handleClick = (mealType, mealData) => {
+    setSelectedMeal({ mealType, mealData });
+  };
+
+  const handleCloseMealDetails = () => {
+    setSelectedMeal(null);
+  };
 
   const documentId = useMemo(() => {
     return `${`${getISOWeekYear(selected)}-W${getISOWeek(selected)}`}`;
@@ -92,7 +102,23 @@ function Dashboard() {
 
                 const dayMeals = dayKey ? data.weekPlan[dayKey] : null;
 
-                return <DailyMealPlan dayName={selectedDay} dayMeals={dayMeals} />;
+                return (
+                  <>
+                  {selectedMeal ? (
+                    <MealDetails
+                      mealType={selectedMeal.mealType}
+                      mealData={selectedMeal.mealData}
+                      onClose={handleCloseMealDetails}
+                    />
+                  ) : (
+                    <DailyMealPlan 
+                      dayName={selectedDay} 
+                      dayMeals={dayMeals} 
+                      onClick={handleClick}
+                    />
+                  )}
+                  </>
+                );
               })()}
             </div>
           )}

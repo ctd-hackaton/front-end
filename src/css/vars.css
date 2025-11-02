@@ -11,10 +11,11 @@
   /* Background / text */
   --bg: #0f172a; /* dark slate */
   --surface: #0b1220; /* darker surface */
+  --sec-bg: #1a222f;  /* secondary darker background */
   --muted-surface: #f8fafc; /* used for message bubble bg */
   --text: #e6eef6; /* primary text on dark bg */
   --muted-text: #9ca3af;
-
+  
   /* Semantic */
   --success: #10b981;
   --danger: #ef4444;

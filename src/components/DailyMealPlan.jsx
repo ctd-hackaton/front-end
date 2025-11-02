@@ -1,6 +1,6 @@
 import styles from "../css/dashboard/DailyMealPlan.module.css";
 
-function DailyMealPlan({ dayName, dayMeals }) {
+function DailyMealPlan({ dayName, dayMeals, onClick }) {
   const mealOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
 
   const getMealOrder = (mealType) => {
@@ -21,12 +21,15 @@ function DailyMealPlan({ dayName, dayMeals }) {
       <div className={styles.header}>
         <h2 className={styles.title}>Meal Plan - {dayName}</h2>
       </div>
-      {dayMeals && (
         <div className={styles.mealList}>
           {Object.entries(dayMeals)
             .sort(([a], [b]) => getMealOrder(a) - getMealOrder(b))
             .map(([mealType, mealData]) => (
-              <div key={mealType} className={styles.mealRow}>
+              <div 
+                key={mealType} 
+                className={styles.mealRow}
+                onClick={() => onClick && onClick(mealType, mealData)}
+              >
                 <div className={styles.mealType}>{mealType}</div>
                 <div className={styles.mealContent}>
                   {mealData.description && (
@@ -40,7 +43,6 @@ function DailyMealPlan({ dayName, dayMeals }) {
               </div>
             ))}
         </div>
-      )}
     </div>
   );
 }

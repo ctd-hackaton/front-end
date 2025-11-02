@@ -9,7 +9,7 @@
 .mainDash {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
   width: 100%;
   gap: 2rem;
