@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, addDoc, query, where } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../hooks/useAuth";
 import { DayPicker } from "react-day-picker";
@@ -25,7 +25,88 @@ function Dashboard() {
   const [error, setError] = useState(null);
   const [selectedMeal, setSelectedMeal] = useState(null);
   const [showChat, setShowChat] = useState(false);
+  const [likedMeals, setLiked] = useState(new Set());
   const { currentUser } = useAuth();
+
+  const handleLike = async (mealType, mealData, dayName) => {
+    if (!currentUser || !mealData?.name) return;
+
+    const isLiked = likedMeals.has(mealData.name);
+
+    try {
+      if (isLiked) {
+        const likedRef = collection(db, "users", currentUser.uid, "liked");
+        const q = query(likedRef, where("name", "==", mealData.name));
+        const querySnapshot = await getDocs(q);
+        
+        const deletePromises = []; // for duplicated names
+        querySnapshot.forEach((docSnapshot) => {
+          deletePromises.push(deleteDoc(docSnapshot.ref));
+        });
+        await Promise.all(deletePromises);
+
+        const selectedDay = dayName || getDay(selected);
+        const weekPlanKeys = Object.keys(data.weekPlan || {});
+        const dayKey = weekPlanKeys.find(key =>
+          key.toLowerCase() === selectedDay.toLowerCase()
+        );
+        
+        if (dayKey && data.weekPlan[dayKey]?.[mealType]) {
+          const planRef = doc(db, "users", currentUser.uid, "mealPlans", documentId);
+          const updPlan = { ...data.weekPlan };
+          updPlan[dayKey] = {
+            ...updPlan[dayKey],
+            [mealType]: {
+              ...updPlan[dayKey][mealType],
+              liked: false
+            }
+          };
+          await setDoc(planRef, { weekPlan: updPlan }, { merge: true });
+          
+          setData({ ...data, weekPlan: updPlan });
+        }
+
+        setLiked(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(mealData.name);
+          return newSet;
+        });
+      } else {
+        const likedRef = collection(db, "users", currentUser.uid, "liked");
+        await addDoc(likedRef, {
+          name: mealData.name,
+          description: mealData.description,
+          mealType,
+          createdAt: new Date()
+        });
+
+        const selectedDay = dayName || getDay(selected);
+        const weekPlanKeys = Object.keys(data.weekPlan || {});
+        const dayKey = weekPlanKeys.find(key =>
+          key.toLowerCase() === selectedDay.toLowerCase()
+        );
+        
+        if (dayKey && data.weekPlan[dayKey]?.[mealType]) {
+          const planRef = doc(db, "users", currentUser.uid, "mealPlans", documentId);
+          const updPlan = { ...data.weekPlan };
+          updPlan[dayKey] = {
+            ...updPlan[dayKey],
+            [mealType]: {
+              ...updPlan[dayKey][mealType],
+              liked: true
+            }
+          };
+          await setDoc(planRef, { weekPlan: updPlan }, { merge: true });
+          
+          setData({ ...data, weekPlan: updPlan });
+        }
+
+        setLiked(prev => new Set(prev).add(mealData.name));
+      }
+    } catch (err) {
+      console.error("Error toggling like:", err);
+    }
+  };
 
   const handleClick = (mealType, mealData) => {
     setSelectedMeal({ mealType, mealData });
@@ -75,6 +156,34 @@ function Dashboard() {
 
     fetchMealPlan();
   }, [currentUser, documentId]);
+
+  useEffect(() => {
+    if (!data?.weekPlan) {
+      setLiked(new Set()); // O(1) on search
+      return;
+    }
+
+    const fetchLikedMeals = async () => {
+      try {
+        const likedRef = collection(db, "users", currentUser.uid, "liked");
+        const likedSnap = await getDocs(likedRef);
+        const likedNames = new Set();
+        
+        likedSnap.forEach((doc) => {
+          const likedData = doc.data();
+          if (likedData.name) {
+            likedNames.add(likedData.name);
+          }
+        });
+        
+        setLiked(likedNames);
+      } catch (err) {
+        console.error("Error fetching liked meals:", err);
+      }
+    };
+
+    fetchLikedMeals();
+  }, [currentUser, data?.weekPlan]);
 
 
   return (
@@ -127,6 +236,8 @@ function Dashboard() {
                       mealData={selectedMeal.mealData}
                       onClose={handleCloseMealDetails}
                       onDislike={handleDislike}
+                      onLike={(mealType, mealData) => handleLike(mealType, mealData, selectedDay)}
+                      isLiked={selectedMeal.mealData?.name ? likedMeals.has(selectedMeal.mealData.name) : false}
                     />
                   ) : (
                     <DailyMealPlan 
