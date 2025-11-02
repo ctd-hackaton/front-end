@@ -1,9 +1,9 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { functions } from "../utils/firebase";
 import { httpsCallable } from "firebase/functions";
 import { useAuth } from "../hooks/useAuth";
-import { saveMessageToDB } from "../utils/db";
+import { saveMessageToDB, checkAndSummarizeHistory } from "../utils/db";
 import ChatUI from "../components/ChatUI";
 
 function Chat() {
@@ -12,8 +12,23 @@ function Chat() {
   const navigate = useNavigate();
   const [latestMealPlan, setLatestMealPlan] = useState(null);
   const [isGeneratingRecipes, setIsGeneratingRecipes] = useState(false);
+  const [currentMessages, setCurrentMessages] = useState(messages);
 
-  const initialMessages = useMemo(() => messages, [messages]);
+  const initialMessages = useMemo(() => currentMessages, [currentMessages]);
+
+  // Check and summarize on mount and when messages change significantly
+  useEffect(() => {
+    const checkSummarization = async () => {
+      if (!currentUser || currentMessages.length <= 20) return;
+      
+      const summarized = await checkAndSummarizeHistory(currentUser.uid, currentMessages);
+      if (summarized.length !== currentMessages.length) {
+        setCurrentMessages(summarized);
+      }
+    };
+
+    checkSummarization();
+  }, [currentUser, currentMessages.length]);
 
   const handleSend = useCallback(
     async (messageText, userMsg) => {

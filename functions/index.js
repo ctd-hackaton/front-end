@@ -13,6 +13,46 @@ if (!admin.apps || !admin.apps.length) {
 
 const dbAdmin = admin.firestore();
 
+// Helper function to get meal image URL from Foodish API
+// Simple API call - returns random food image URL
+async function getMealImageUrl(mealName) {
+  const https = require("https");
+
+  return new Promise((resolve) => {
+    const req = https.get(
+      "https://foodish-api.com/api/",
+      { timeout: 3000 },
+      (res) => {
+        let data = "";
+
+        res.on("data", (chunk) => {
+          data += chunk;
+        });
+
+        res.on("end", () => {
+          try {
+            const response = JSON.parse(data);
+            resolve(
+              response.image || "https://via.placeholder.com/600x400?text=Food"
+            );
+          } catch (e) {
+            resolve("https://via.placeholder.com/600x400?text=Food");
+          }
+        });
+      }
+    );
+
+    req.on("error", () => {
+      resolve("https://via.placeholder.com/600x400?text=Food");
+    });
+
+    req.on("timeout", () => {
+      req.destroy();
+      resolve("https://via.placeholder.com/600x400?text=Food");
+    });
+  });
+}
+
 // Helper function to generate recipes for all meals in a week plan
 async function generateRecipesForMealPlan(userId, weekId, weekPlan) {
   const openai = new OpenAI({
@@ -121,7 +161,7 @@ Create detailed cooking instructions that will help someone successfully prepare
           completion.choices[0]?.message?.content || "{}"
         );
 
-        // Update the meal with recipe in Firestore
+        // Update the meal with recipe in Firestore (image already exists from meal plan creation)
         await docRef.update({
           [`weekPlan.${day}.${mealType}.recipe`]: recipeData,
           "recipeGenerationStatus.progress":
@@ -340,6 +380,45 @@ Return ONLY the JSON object with all 7 days completed and correct weekId.`
             weekEndDate.setDate(weekStartDate.getDate() + 6);
             weekEndDate.setHours(23, 59, 59, 999);
 
+            // Fetch images for all meals in parallel
+            const days = [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday",
+              "saturday",
+              "sunday",
+            ];
+            const mealTypes = ["breakfast", "lunch", "dinner"];
+            const imagePromises = [];
+
+            for (const day of days) {
+              for (const mealType of mealTypes) {
+                if (mealPlan.weekPlan[day]?.[mealType]?.name) {
+                  imagePromises.push(
+                    getMealImageUrl(mealPlan.weekPlan[day][mealType].name).then(
+                      (imageUrl) => ({
+                        day,
+                        mealType,
+                        imageUrl,
+                      })
+                    )
+                  );
+                }
+              }
+            }
+
+            // Wait for all images to be fetched
+            const imageResults = await Promise.all(imagePromises);
+
+            // Add image URLs to meal plan
+            for (const { day, mealType, imageUrl } of imageResults) {
+              if (mealPlan.weekPlan[day]?.[mealType]) {
+                mealPlan.weekPlan[day][mealType].imageUrl = imageUrl;
+              }
+            }
+
             const docRef = dbAdmin.doc(`users/${userId}/mealPlans/${weekId}`);
             await docRef.set({
               ...mealPlan,
@@ -352,7 +431,11 @@ Return ONLY the JSON object with all 7 days completed and correct weekId.`
               createdAt: admin.firestore.Timestamp.now(),
               updatedAt: admin.firestore.Timestamp.now(),
             });
-            logger.info("Meal plan saved to Firestore", { weekId, userId });
+            logger.info("Meal plan saved to Firestore with images", {
+              weekId,
+              userId,
+              imageCount: imageResults.length,
+            });
           } catch (err) {
             logger.error("Failed to save meal plan to Firestore:", {
               error: err.message,
