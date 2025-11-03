@@ -1,17 +1,28 @@
+import { memo } from "react";
 import styles from "../css/dashboard/DailyMealPlan.module.css";
 
 function DailyMealPlan({ dayName, dayMeals, onClick }) {
-  const mealOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
+  const mealOrder = ["breakfast", "lunch", "dinner", "snack"];
 
   const getMealOrder = (mealType) => {
-    const index = mealOrder.findIndex(order => order.toLowerCase() === mealType.toLowerCase());
+    const index = mealOrder.findIndex(
+      (order) => order.toLowerCase() === mealType.toLowerCase()
+    );
     return index !== -1 ? index : 10;
   };
 
   if (!dayMeals) {
     return (
       <div className={styles.card}>
-        <p className={styles.noMeals}>No meal plan found for this day</p>
+        <div className={styles.header}>
+          <h2 className={styles.title}>Meal Plan - {dayName}</h2>
+        </div>
+        <div className={styles.emptyState}>
+          <p className={styles.noMeals}>No meal plan for today</p>
+          <p className={styles.noMealsHint}>
+            Create a meal plan to see your meals here
+          </p>
+        </div>
       </div>
     );
   }
@@ -21,31 +32,34 @@ function DailyMealPlan({ dayName, dayMeals, onClick }) {
       <div className={styles.header}>
         <h2 className={styles.title}>Meal Plan - {dayName}</h2>
       </div>
-        <div className={styles.mealList}>
-          {Object.entries(dayMeals)
-            .sort(([a], [b]) => getMealOrder(a) - getMealOrder(b))
-            .map(([mealType, mealData]) => (
-              <div 
-                key={mealType} 
-                className={styles.mealRow}
-                onClick={() => onClick && onClick(mealType, mealData)}
-              >
-                <div className={styles.mealType}>{mealType}</div>
-                <div className={styles.mealContent}>
-                  {mealData.description && (
-                    <p className={styles.mealDescription}>{mealData.description}</p>
-                  )}
-                  <p className={styles.mealTime}>{mealData.time || ""}</p>
-                </div>
-                <div className={styles.calories}>
-                  {mealData.nutrition?.calories ? `${mealData.nutrition.calories} kcal` : ""}
-                </div>
+      <div className={styles.mealList}>
+        {Object.entries(dayMeals)
+          .sort(([a], [b]) => getMealOrder(a) - getMealOrder(b))
+          .map(([mealType, mealData]) => (
+            <div
+              key={mealType}
+              className={styles.mealRow}
+              onClick={() => onClick && onClick(mealType, mealData)}
+            >
+              <div className={styles.mealType}>{mealType}</div>
+              <div className={styles.mealContent}>
+                {mealData.description && (
+                  <p className={styles.mealDescription}>
+                    {mealData.description}
+                  </p>
+                )}
+                <p className={styles.mealTime}>{mealData.time || ""}</p>
               </div>
-            ))}
-        </div>
+              <div className={styles.calories}>
+                {mealData.nutrition?.calories
+                  ? `${mealData.nutrition.calories} kcal`
+                  : ""}
+              </div>
+            </div>
+          ))}
+      </div>
     </div>
   );
 }
 
-export default DailyMealPlan;
-
+export default memo(DailyMealPlan);
