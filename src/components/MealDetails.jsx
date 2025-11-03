@@ -1,4 +1,5 @@
 import { MdClose, MdFavorite, MdThumbDown, MdFavoriteBorder } from 'react-icons/md';
+import { Clock, ChefHat, Users, Flame, Wheat, Droplet } from 'lucide-react';
 import styles from "../css/dashboard/MealDetails.module.css";
 
 function MealDetails({ mealType, mealData, onClose, onDislike, onLike, isLiked = false }) {
@@ -6,14 +7,19 @@ function MealDetails({ mealType, mealData, onClose, onDislike, onLike, isLiked =
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.mealTitleContainer}>
-          <h3 className={styles.mealTitle}>{mealType}</h3>
-          <h3 className={styles.mealName}>{mealData.name}</h3>
+
+      <div className={styles.heroImage}>
+        <img
+          src={mealData.imageUrl}
+          alt={mealData.name}
+          className={styles.mealImage}
+        />
+        <div className={styles.badge}>
+          {mealType}
         </div>
-        <div className={styles.actionButtons}>
-          <button 
-            className={styles.iconButton} 
+        <div className={styles.actionButtonsOverlay}>
+          <button
+            className={styles.iconButton}
             onClick={() => onLike && onLike(mealType, mealData)}
           >
             {isLiked ? <MdFavorite /> : <MdFavoriteBorder />}
@@ -27,46 +33,113 @@ function MealDetails({ mealType, mealData, onClose, onDislike, onLike, isLiked =
         </div>
       </div>
 
-      <div className={styles.content}>
+      <div className={styles.header}>
+        <div className={styles.titleSection}>
+          <h2 className={styles.title}>{mealData.name}</h2>
+          <p className={styles.description}>{mealData.description}</p>
+        </div>
+      </div>
 
-        <div className={styles.description}>
-          <span>{mealData.description}</span>
+      <div className={styles.content}>
+        <div className={styles.quickInfo}>
+          <div className={styles.infoItem}>
+            <Clock className={styles.infoIcon} />
+            <div>
+              <div className={styles.infoLabel}>Prep Time</div>
+              <div className={styles.infoValue}>{mealData.recipe.prepTime}</div>
+            </div>
+          </div>
+          <div className={styles.infoItem}>
+            <ChefHat className={styles.infoIcon} />
+            <div>
+              <div className={styles.infoLabel}>Cook Time</div>
+              <div className={styles.infoValue}>{mealData.recipe.cookTime}</div>
+            </div>
+          </div>
+          <div className={styles.infoItem}>
+            <div className={styles.difficultyDotContainer}>
+              <div className={styles.difficultyDot}></div>
+            </div>
+            <div>
+              <div className={styles.infoLabel}>Difficulty</div>
+              <div className={styles.infoValue}>{mealData.recipe.difficulty}</div>
+            </div>
+          </div>
+          <div className={styles.infoItem}>
+            <Users className={styles.infoIcon} />
+            <div>
+              <div className={styles.infoLabel}>Servings</div>
+              <div className={styles.infoValue}>{mealData.recipe.servings}</div>
+            </div>
+          </div>
         </div>
 
-        <div>
+        <div className={styles.separator} />
+
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>Ingredients</h3>
           <div className={styles.ingredientsList}>
             {mealData.ingredients.map((ingredient, index) => (
               <div key={index} className={styles.ingredient}>
                 <span>{ingredient.item}</span>
                 <span className={styles.ingredientDetails}>
-                  {ingredient.amount} {ingredient.unit} ({ingredient.category})
+                  {ingredient.amount} {ingredient.unit} <span className={styles.ingredientCategory}>({ingredient.category})</span>
                 </span>
               </div>
             ))}
           </div>
         </div>
 
-        {mealData.nutrition && (
-          <div>
-            <div className={styles.nutritionGrid}>
-              {[
-                { key: 'calories', label: 'Calories', unit: '' },
-                { key: 'carbs', label: 'Carbs', unit: 'g' },
-                { key: 'fats', label: 'Fats', unit: 'g' },
-                { key: 'protein', label: 'Protein', unit: 'g' }
-              ]
-                .filter(item => mealData.nutrition[item.key] !== undefined)
-                .map(item => (
-                  <div key={item.key} className={styles.nutritionItem}>
-                    <span className={styles.nutritionLabel}>{item.label}:</span>
-                    <span className={styles.nutritionValue}>
+        <div className={styles.separator} />
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>Nutrition</h3>
+          <div className={styles.nutritionGrid}>
+            {[
+              { key: 'calories', label: 'Calories', Icon: Flame, color: '#0d9488', unit: '' },
+              { key: 'carbs', label: 'Carbs', Icon: Wheat, color: '#7c3aed', unit: 'g' },
+              { key: 'fats', label: 'Fats', Icon: Droplet, color: '#d97706', unit: 'g' },
+              { key: 'protein', label: 'Protein', Icon: ChefHat, color: '#dc2626', unit: 'g' }
+            ]
+              .filter(item => mealData.nutrition[item.key] !== undefined)
+              .map(item => (
+                <div key={item.key} className={styles.nutritionItem}>
+                  <item.Icon className={styles.nutritionIcon} style={{ color: item.color }} />
+                  <div>
+                    <div className={styles.nutritionLabel}>{item.label}</div>
+                    <div className={styles.nutritionValue}>
                       {mealData.nutrition[item.key]}{item.unit}
-                    </span>
+                    </div>
                   </div>
-                ))}
-            </div>
+                </div>
+              ))}
           </div>
-        )}
+        </div>
+
+        <div className={styles.separator} />
+
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>Instructions</h3>
+          <ol className={styles.stepsList}>
+            {mealData.recipe.steps.map((step, index) => (
+              <li key={index} className={styles.step}>
+                <span className={styles.stepNumber}>{index + 1}</span>
+                <span className={styles.stepText}>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <div className={styles.separator} />
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>Tips</h3>
+          <ul className={styles.tipsList}>
+            {mealData.recipe.tips.map((tip, index) => (
+              <li key={index} className={styles.tip}>
+                <span className={styles.tipText}>{tip}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
