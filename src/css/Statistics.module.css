@@ -72,7 +72,6 @@
   }
 }
 
-
 .sectionTitle {
   color: var(--text);
   font-size: var(--text-header-lg, 1.5rem);
@@ -91,19 +90,18 @@
   }
 }
 
-
-  .weekContent {
-    max-width: 1280px; 
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 16px; 
-    padding-right: 16px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-  }
-  /* src/css/Statistics.module.css */
+.weekContent {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+/* src/css/Statistics.module.css */
 .weekSelector {
   display: flex;
   align-items: center;
@@ -820,278 +818,286 @@
 }
 
 /* Dashboard Container */
-  .container {
-    max-width: 1400px;
-    margin: 0 auto;
+.container {
+  width: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  margin-bottom: 2rem;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brand-icon {
+  color: var(--color-primary);
+}
+
+.brand-name {
+  color: var(--text);
+}
+
+.week-select {
+  padding: 0.5rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--sec-bg);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* Goal Cards */
+.goals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.goalCard {
+  background: var(--surface);
+  border: 1px solid var(--sec-bg);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  transition: transform 0.2s;
+}
+
+.goalCard:hover {
+  transform: translateY(-2px);
+}
+
+.goalHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.goalLabel {
+  color: var(--muted-text);
+  font-size: 0.875rem;
+}
+
+.goalValue {
+  color: var(--text);
+  font-size: 1.75rem;
+}
+
+.goalUnit {
+  color: var(--muted-text);
+  font-size: 1rem;
+  margin-left: 0.25rem;
+}
+
+.goalIcon {
+  color: var(--color-primary);
+}
+
+.progressBar {
+  height: 8px;
+  background: var(--sec-bg);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 999px;
+  transition: width 0.5s;
+}
+
+.goalFooter {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted-text);
+  font-size: 0.875rem;
+}
+
+.noDataText {
+  color: var(--muted-text);
+  font-style: italic;
+  width: 100%;
+  text-align: center;
+}
+
+.current {
+  color: var(--color-primary);
+}
+
+/* Charts */
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 1.5rem;
+}
+
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--sec-bg);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+.chart-card.full {
+  grid-column: 1 / -1;
+}
+
+.chart-title {
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.chart-subtitle {
+  color: var(--muted-text);
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.chart {
+  width: 100%;
+  height: 300px;
+}
+
+/* D3 styles */
+.axis text {
+  fill: var(--muted-text);
+  font-size: 12px;
+}
+
+.axis path,
+.axis line {
+  stroke: var(--sec-bg);
+}
+
+.grid line {
+  stroke: var(--sec-bg);
+  stroke-dasharray: 3, 3;
+}
+
+.line-main {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 3;
+}
+
+.line-target {
+  stroke: var(--muted-text);
+  stroke-width: 1;
+  stroke-dasharray: 3, 3;
+}
+
+.dot {
+  fill: var(--color-primary);
+  stroke: var(--surface);
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+.bar {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.bar:hover {
+  opacity: 0.8;
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--sec-bg);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+}
+
+.tooltip.visible {
+  opacity: 1;
+}
+
+.tooltip-title {
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.tooltip-item {
+  color: var(--muted-text);
+  font-size: 0.875rem;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legend-label {
+  color: var(--muted-text);
+  font-size: 0.875rem;
+}
+
+/* Donut center */
+.donut-value {
+  fill: var(--text);
+  font-size: 1.75rem;
+  text-anchor: middle;
+}
+
+.donut-label {
+  fill: var(--muted-text);
+  font-size: 0.875rem;
+  text-anchor: middle;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 1rem;
   }
-  
-  /* Header */
-  .header {
-    margin-bottom: 2rem;
-  }
-  
-  .header-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-  }
-  
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .brand-icon {
-    color: var(--color-primary);
-  }
-  
-  .brand-name {
-    color: var(--text);
-  }
-  
-  .week-select {
-    padding: 0.5rem 1rem;
-    background: var(--surface);
-    border: 1px solid var(--sec-bg);
-    border-radius: var(--radius-md);
-    color: var(--text);
-    cursor: pointer;
-  }
-  
-  /* Goal Cards */
+
   .goals {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
+    grid-template-columns: 1fr;
   }
-  
-  .goalCard {
-    background: var(--surface);
-    border: 1px solid var(--sec-bg);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    transition: transform 0.2s;
-  }
-  
-  .goalCard:hover {
-    transform: translateY(-2px);
-  }
-  
-  .goalHeader {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-  }
-  
-  .goalLabel {
-    color: var(--muted-text);
-    font-size: 0.875rem;
-  }
-  
-  .goalValue {
-    color: var(--text);
-    font-size: 1.75rem;
-  }
-  
-  .goalUnit {
-    color: var(--muted-text);
-    font-size: 1rem;
-    margin-left: 0.25rem;
-  }
-  
-  .goalIcon {
-    color: var(--color-primary);
-  }
-  
-  .progressBar {
-    height: 8px;
-    background: var(--sec-bg);
-    border-radius: 999px;
-    overflow: hidden;
-    margin-bottom: 0.5rem;
-  }
-  
-  .progressFill {
-    height: 100%;
-    background: var(--color-primary);
-    border-radius: 999px;
-    transition: width 0.5s;
-  }
-  
-  .goalFooter {
-    display: flex;
-    justify-content: space-between;
-    color: var(--muted-text);
-    font-size: 0.875rem;
-  }
-  
-  .current {
-    color: var(--color-primary);
-  }
-  
-  /* Charts */
+
   .charts {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: 1fr;
   }
-  
-  .chart-card {
-    background: var(--surface);
-    border: 1px solid var(--sec-bg);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-  }
-  
-  .chart-card.full {
-    grid-column: 1 / -1;
-  }
-  
-  .chart-title {
-    color: var(--text);
-    margin-bottom: 0.5rem;
-  }
-  
-  .chart-subtitle {
-    color: var(--muted-text);
-    font-size: 0.875rem;
-    margin-bottom: 1.5rem;
-  }
-  
+
   .chart {
-    width: 100%;
-    height: 300px;
+    height: 250px;
   }
-  
-  /* D3 styles */
-  .axis text {
-    fill: var(--muted-text);
-    font-size: 12px;
-  }
-  
-  .axis path,
-  .axis line {
-    stroke: var(--sec-bg);
-  }
-  
-  .grid line {
-    stroke: var(--sec-bg);
-    stroke-dasharray: 3, 3;
-  }
-  
-  .line-main {
-    fill: none;
-    stroke: var(--color-primary);
-    stroke-width: 3;
-  }
-  
-  .line-target {
-    stroke: var(--muted-text);
-    stroke-width: 1;
-    stroke-dasharray: 3, 3;
-  }
-  
-  .dot {
-    fill: var(--color-primary);
-    stroke: var(--surface);
-    stroke-width: 2;
-    cursor: pointer;
-  }
-  
-  .bar {
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
-  
-  .bar:hover {
-    opacity: 0.8;
-  }
-  
-  /* Tooltip */
-  .tooltip {
-    position: absolute;
-    background: var(--surface);
-    border: 1px solid var(--sec-bg);
-    border-radius: var(--radius-md);
-    padding: 0.75rem;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s;
-    box-shadow: var(--shadow-md);
-    z-index: 100;
-  }
-  
-  .tooltip.visible {
-    opacity: 1;
-  }
-  
-  .tooltip-title {
-    color: var(--text);
-    margin-bottom: 0.5rem;
-  }
-  
-  .tooltip-item {
-    color: var(--muted-text);
-    font-size: 0.875rem;
-  }
-  
-  /* Legend */
-  .legend {
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
-    margin-top: 1rem;
-  }
-  
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-  }
-  
-  .legend-label {
-    color: var(--muted-text);
-    font-size: 0.875rem;
-  }
-  
-  /* Donut center */
-  .donut-value {
-    fill: var(--text);
-    font-size: 1.75rem;
-    text-anchor: middle;
-  }
-  
-  .donut-label {
-    fill: var(--muted-text);
-    font-size: 0.875rem;
-    text-anchor: middle;
-  }
-  
-  /* Responsive */
-  @media (max-width: 768px) {
-    .dashboard {
-      padding: 1rem;
-    }
-  
-    .goals {
-      grid-template-columns: 1fr;
-    }
-  
-    .charts {
-      grid-template-columns: 1fr;
-    }
-  
-    .chart {
-      height: 250px;
-    }
-  }
-  
+}

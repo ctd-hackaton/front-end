@@ -432,6 +432,10 @@ Each meal should include:
 - ingredients: Array of {item, amount, unit, category}
 - nutrition: {calories (number), protein (grams), carbs (grams), fats (grams)}
 
+CATEGORY NAMING RULES:
+- ALWAYS use plural forms for categories: "Proteins" not "Protein", "Vegetables" not "Vegetable", "Fruits" not "Fruit", "Grains" not "Grain", "Dairy Products" not "Dairy", "Fats" not "Fat", "Oils" not "Oil", "Herbs" not "Herb", "Spices" not "Spice", "Legumes" not "Legume", "Nuts" not "Nut", "Seeds" not "Seed", "Sweeteners" not "Sweetener", "Beverages" not "Beverage"
+- Common categories: Proteins, Vegetables, Fruits, Grains, Dairy Products, Fats, Oils, Herbs, Spices, Legumes, Nuts, Seeds, Sweeteners, Beverages, Condiments
+
 IMPORTANT: 
 - Do NOT include recipe field - recipes will be generated separately
 - Focus on meal variety, nutritional balance, and interesting ingredient combinations
@@ -664,6 +668,10 @@ Current meal details:
       }g protein, ${mealData.nutrition.carbs}g carbs, ${
         mealData.nutrition.fats
       }g fats${recipeInfo}
+
+CATEGORY NAMING RULES:
+- ALWAYS use plural forms for categories: "Proteins" not "Protein", "Vegetables" not "Vegetable", "Fruits" not "Fruit", "Grains" not "Grain", "Dairy Products" not "Dairy", "Fats" not "Fat", "Oils" not "Oil", "Herbs" not "Herb", "Spices" not "Spice", "Legumes" not "Legume", "Nuts" not "Nut", "Seeds" not "Seed", "Sweeteners" not "Sweetener", "Beverages" not "Beverage"
+- Common categories: Proteins, Vegetables, Fruits, Grains, Dairy Products, Fats, Oils, Herbs, Spices, Legumes, Nuts, Seeds, Sweeteners, Beverages, Condiments
 
 IMPORTANT: Always respond with a JSON object in this exact format:
 {

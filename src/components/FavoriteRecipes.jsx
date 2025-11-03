@@ -1,56 +1,146 @@
-import styles from '../css/home/FavoriteRecipes.module.css';
-import { Heart } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../utils/firebase";
+import { useAuth } from "../hooks/useAuth";
+import styles from "../css/home/FavoriteRecipes.module.css";
+import { Heart } from "lucide-react";
 
-const FavoriteRecipes = ({ 
-  title = "Featured Recipes",
-  image1 = {
-    src: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600",
-    alt: "Delicious salad",
-    title: "Fresh Garden Salad",
-    description: "Healthy & Nutritious"
-  },
-  image2 = {
-    src: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600",
-    alt: "Pasta dish",
-    title: "Creamy Pasta",
-    description: "Comfort Food"
+const FavoriteRecipes = () => {
+  const { currentUser } = useAuth();
+  const [likedRecipes, setLikedRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const fetchLikedRecipes = async () => {
+      try {
+        const likedRef = collection(db, "users", currentUser.uid, "liked");
+        const likedSnap = await getDocs(likedRef);
+        const recipes = [];
+
+        likedSnap.forEach((doc) => {
+          recipes.push({
+            id: doc.id,
+            ...doc.data(),
+          });
+        });
+
+        setLikedRecipes(recipes);
+      } catch (err) {
+        console.error("Error fetching liked recipes:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLikedRecipes();
+  }, [currentUser]);
+
+  if (loading) {
+    return (
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <Heart size={24} color="#ef4444" fill="none" />
+          &nbsp;
+          <h2 className={styles.title}>Favorite Recipes</h2>
+        </div>
+        <div className={styles.loading}>Loading...</div>
+      </div>
+    );
   }
-}) => {
+
+  if (likedRecipes.length === 0) {
+    return (
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <Heart size={24} color="#ef4444" fill="none" />
+          &nbsp;
+          <h2 className={styles.title}>Favorite Recipes</h2>
+        </div>
+        <div className={styles.emptyState}>
+          <p>No favorite recipes yet</p>
+          <p className={styles.emptyHint}>
+            Like recipes from your meal plan to see them here
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show first 2 recipes
+  const displayRecipes = likedRecipes.slice(0, 2);
+
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-      <Heart  size={24} color="#ef4444" fill="none" />&nbsp;
-        <h2 className={styles.title}>{title}</h2>
+        <Heart size={24} color="#ef4444" fill="#ef4444" />
+        &nbsp;
+        <h2 className={styles.title}>Favorite Recipes</h2>
       </div>
-      
-      <div className={styles.imagesContainer}>
-        <div className={styles.imageCard}>
-          <div className={styles.imageWrapper}>
-            <img 
-              src={image1.src} 
-              alt={image1.alt}
-              className={styles.image}
-            />
-          </div>
-          <div className={styles.imageInfo}>
-            <h3 className={styles.imageTitle}>{image1.title}</h3>
-            <p className={styles.imageDescription}>{image1.description}</p>
-          </div>
-        </div>
 
-        <div className={styles.imageCard}>
-          <div className={styles.imageWrapper}>
-            <img 
-              src={image2.src} 
-              alt={image2.alt}
-              className={styles.image}
-            />
+      <div className={styles.imagesContainer}>
+        {displayRecipes.map((recipe) => (
+          <div key={recipe.id} className={styles.imageCard}>
+            {recipe.imageUrl ? (
+              <div className={styles.imageWrapper}>
+                <img
+                  src={recipe.imageUrl}
+                  alt={recipe.name}
+                  className={styles.image}
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                    e.target.parentElement.classList.add(
+                      styles.imagePlaceholder
+                    );
+                  }}
+                />
+              </div>
+            ) : (
+              <div
+                className={`${styles.imageWrapper} ${styles.imagePlaceholder}`}
+              >
+                <span className={styles.placeholderIcon}>🍽️</span>
+              </div>
+            )}
+            <div className={styles.recipeInfo}>
+              <h3 className={styles.imageTitle}>
+                {recipe.name || "Untitled Recipe"}
+              </h3>
+              {recipe.nutrition ? (
+                <div className={styles.macros}>
+                  <span className={styles.macro}>
+                    {Math.round(recipe.nutrition.calories || 0)} cal
+                  </span>
+                  <span className={styles.macroDivider}>•</span>
+                  <span className={styles.macro}>
+                    P: {Math.round(recipe.nutrition.protein || 0)}g
+                  </span>
+                  <span className={styles.macroDivider}>•</span>
+                  <span className={styles.macro}>
+                    C: {Math.round(recipe.nutrition.carbs || 0)}g
+                  </span>
+                  <span className={styles.macroDivider}>•</span>
+                  <span className={styles.macro}>
+                    F: {Math.round(recipe.nutrition.fats || 0)}g
+                  </span>
+                </div>
+              ) : (
+                <div className={styles.noNutrition}>
+                  <span className={styles.muted}>
+                    Nutrition info not available
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-          <div className={styles.imageInfo}>
-            <h3 className={styles.imageTitle}>{image2.title}</h3>
-            <p className={styles.imageDescription}>{image2.description}</p>
+        ))}
+
+        {likedRecipes.length > 2 && (
+          <div className={styles.moreRecipes}>
+            +{likedRecipes.length - 2} more
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

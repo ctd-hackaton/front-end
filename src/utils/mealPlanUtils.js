@@ -1,4 +1,4 @@
-import { Flame, Drumstick, Wheat, Droplet } from 'lucide-react';
+import { Flame, Drumstick, Wheat, Droplet } from "lucide-react";
 
 /**
  * day nutrition calculation
@@ -6,7 +6,10 @@ import { Flame, Drumstick, Wheat, Droplet } from 'lucide-react';
 export const calculateDayNutrition = (dayMeals, goals = null) => {
   if (!dayMeals || typeof dayMeals !== "object") {
     return {
-      calories: 0, carbs: 0, fats: 0, protein: 0,
+      calories: 0,
+      carbs: 0,
+      fats: 0,
+      protein: 0,
       caloriesGoal: goals?.dailyCalorieTarget || 0,
       carbsGoal: goals?.carbsGoalGrams || 0,
       fatsGoal: goals?.fatsGoalGrams || 0,
@@ -14,7 +17,10 @@ export const calculateDayNutrition = (dayMeals, goals = null) => {
     };
   }
 
-  let calories = 0, carbs = 0, fats = 0, protein = 0;
+  let calories = 0,
+    carbs = 0,
+    fats = 0,
+    protein = 0;
 
   Object.values(dayMeals).forEach((meal) => {
     if (meal?.nutrition) {
@@ -26,14 +32,16 @@ export const calculateDayNutrition = (dayMeals, goals = null) => {
   });
 
   return {
-    calories, carbs, fats, protein,
+    calories,
+    carbs,
+    fats,
+    protein,
     caloriesGoal: goals?.dailyCalorieTarget || 0,
     carbsGoal: goals?.carbsGoalGrams || 0,
     fatsGoal: goals?.fatsGoalGrams || 0,
     proteinGoal: goals?.proteinGoalGrams || 0,
   };
 };
-
 
 /**
  * day ingredients collection
@@ -71,11 +79,10 @@ export const collectDayIngredientsSorted = (dayMeals) => {
 
   const sorted = Object.entries(countMap)
     .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count); 
+    .sort((a, b) => b.count - a.count);
 
   return sorted;
 };
-
 
 /**
  * weekly plan processing
@@ -83,7 +90,15 @@ export const collectDayIngredientsSorted = (dayMeals) => {
 export const processWeeklyPlan = (weekPlan, goals = null) => {
   if (!weekPlan || typeof weekPlan !== "object") return [];
 
-  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const daysOfWeek = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
 
   return daysOfWeek.map((day) => {
     const dayKey = Object.keys(weekPlan).find(
@@ -101,7 +116,6 @@ export const processWeeklyPlan = (weekPlan, goals = null) => {
     };
   });
 };
-
 
 /**
  * total nutrition and ingredients for the week
@@ -127,7 +141,6 @@ export const calculateWeeklyTotals = (weekPlan, goals = null) => {
     allIngredients,
   };
 };
-
 
 /**
  * Goals array for GoalCard components
@@ -175,13 +188,13 @@ export const getWeeklyIngredientsSorted = (weekPlan) => {
 
   const ingredientSet = new Set();
   const countMap = {};
-  
-  Object.values(weekPlan).forEach(dayMeals => {
+
+  Object.values(weekPlan).forEach((dayMeals) => {
     if (!dayMeals) return;
-    Object.values(dayMeals).forEach(meal => {
+    Object.values(dayMeals).forEach((meal) => {
       if (!meal.ingredients) return;
-      meal.ingredients.forEach(ing => {
-        const name = ing.item?.trim().toLowerCase(); 
+      meal.ingredients.forEach((ing) => {
+        const name = ing.item?.trim().toLowerCase();
         if (!name) return;
         countMap[name] = (countMap[name] || 0) + 1;
       });
@@ -190,9 +203,8 @@ export const getWeeklyIngredientsSorted = (weekPlan) => {
 
   return Object.entries(countMap)
     .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count); 
+    .sort((a, b) => b.count - a.count);
 };
-
 
 /**
  * ingredients for today
@@ -200,8 +212,16 @@ export const getWeeklyIngredientsSorted = (weekPlan) => {
 export const getTodayIngredients = (weekPlan) => {
   if (!weekPlan || typeof weekPlan !== "object") return [];
 
-  const todayIndex = new Date().getDay(); 
-  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const todayIndex = new Date().getDay();
+  const daysOfWeek = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
   const todayName = daysOfWeek[todayIndex];
 
   const dayKey = Object.keys(weekPlan).find(
@@ -213,6 +233,59 @@ export const getTodayIngredients = (weekPlan) => {
 };
 
 /**
+ * Get aggregated ingredients for the entire week
+ * Combines ingredients with same name and sums their amounts
+ */
+export const getWeekIngredients = (weekPlan) => {
+  if (!weekPlan || typeof weekPlan !== "object") return [];
+
+  const ingredientMap = {};
+
+  // Iterate through all days in the week plan
+  Object.values(weekPlan).forEach((dayMeals) => {
+    if (!dayMeals || typeof dayMeals !== "object") return;
+
+    // Iterate through all meals in the day
+    Object.values(dayMeals).forEach((meal) => {
+      if (!Array.isArray(meal.ingredients)) return;
+
+      // Process each ingredient
+      meal.ingredients.forEach((ing) => {
+        const itemName = ing.item?.trim();
+        const unit = ing.unit?.trim() || "";
+        const amount = parseFloat(ing.amount) || 0;
+
+        if (!itemName) return;
+
+        // Create a key combining item name and unit
+        const key = `${itemName.toLowerCase()}|${unit.toLowerCase()}`;
+
+        if (ingredientMap[key]) {
+          // Sum the amounts if same ingredient with same unit
+          ingredientMap[key].amount += amount;
+        } else {
+          // Create new entry
+          ingredientMap[key] = {
+            item: itemName,
+            unit: unit,
+            amount: amount,
+            category: ing.category || "Other",
+          };
+        }
+      });
+    });
+  });
+
+  // Convert map to array and sort by category then by item name
+  return Object.values(ingredientMap).sort((a, b) => {
+    if (a.category !== b.category) {
+      return a.category.localeCompare(b.category);
+    }
+    return a.item.localeCompare(b.item);
+  });
+};
+
+/**
  * Format data for DailyCaloriesChart component
  */
 export const formatChartData = (weeklyData) => {
@@ -221,18 +294,18 @@ export const formatChartData = (weeklyData) => {
   }
 
   const dayAbbreviations = {
-    "Monday": "Mon",
-    "Tuesday": "Tue",
-    "Wednesday": "Wed",
-    "Thursday": "Thu",
-    "Friday": "Fri",
-    "Saturday": "Sat",
-    "Sunday": "Sun"
+    Monday: "Mon",
+    Tuesday: "Tue",
+    Wednesday: "Wed",
+    Thursday: "Thu",
+    Friday: "Fri",
+    Saturday: "Sat",
+    Sunday: "Sun",
   };
 
   return weeklyData.map((dayData) => ({
     day: dayAbbreviations[dayData.day] || dayData.day.substring(0, 3),
     calories: Math.round(dayData.nutrition.calories || 0),
-    target: dayData.nutrition.caloriesGoal || 0
+    target: dayData.nutrition.caloriesGoal || 0,
   }));
 };

@@ -1,111 +1,268 @@
 .card {
-    background: var(--surface);
-    border-radius: var(--radius-lg);
-    padding: var(--container-gap);
-    max-width: 800px;
-    width: 100%;
-    box-shadow: var(--shadow-md);
-    border: none;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: var(--container-gap);
+  width: 100%;
+  height: 100%;
+  box-shadow: var(--shadow-md);
+  border: none;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--container-gap);
+  padding-bottom: var(--container-gap);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.imagesContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--container-gap);
+  flex: 1;
+}
+
+.imageCard {
+  background: var(--sec-bg);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.imageCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.recipeInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: var(--container-gap);
+}
+
+.imageWrapper {
+  width: 100%;
+  height: 140px;
+  overflow: hidden;
+  background: var(--bg);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.imagePlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+}
+
+.placeholderIcon {
+  font-size: 3rem;
+  opacity: 0.3;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.imageCard:hover .image {
+  transform: scale(1.05);
+}
+
+.imageInfo {
+  padding: var(--container-gap);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.imageTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+.macros {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.macro {
+  font-size: 0.75rem;
+  color: var(--muted-text);
+  font-weight: 500;
+}
+
+.macroDivider {
+  color: var(--muted-text);
+  opacity: 0.5;
+  font-size: 0.75rem;
+}
+
+.noNutrition {
+  margin-top: 4px;
+}
+
+.muted {
+  font-size: 0.75rem;
+  color: var(--muted-text);
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.imageDescription {
+  color: var(--muted-text);
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  color: var(--muted-text);
+  font-size: 0.9rem;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  gap: 8px;
+}
+
+.emptyState p {
+  margin: 0;
+  color: var(--muted-text);
+  font-size: 0.95rem;
+}
+
+.emptyHint {
+  font-size: 0.85rem !important;
+  opacity: 0.7;
+}
+
+.moreRecipes {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 12px;
+  background: var(--sec-bg);
+  border-radius: var(--radius-md);
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modalContent {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
   }
-  
-  .header {
-    display: flex;
-    align-items: center;
-    margin-bottom: var(--container-gap);
-    padding-bottom: var(--container-gap);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
-  
-  .title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text);
-    margin: 0;
-  }
-  
+}
+
+.modalContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modalContent::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.modalContent::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.modalContent::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 768px) {
   .imagesContainer {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--container-gap);
+    grid-template-columns: 1fr;
   }
-  
-  .imageCard {
-    background: var(--sec-bg);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.03);
-  }
-  
-  .imageCard:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-    border-color: rgba(255, 255, 255, 0.08);
-  }
-  
+
   .imageWrapper {
-    width: 100%;
-    height: 180px;
-    overflow: hidden;
-    background: var(--bg);
-    position: relative;
+    height: 200px;
   }
-  
-  .image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 0.75rem;
   }
-  
-  .imageCard:hover .image {
-    transform: scale(1.05);
+
+  .imageWrapper {
+    height: 160px;
   }
-  
-  .imageInfo {
-    padding: var(--container-gap);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .imageTitle {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text);
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    line-height: 1.4;
-  }
-  
-  .imageDescription {
-    color: var(--muted-text);
-    margin: 0;
-    font-size: 0.875rem;
-  }
-  
-  @media (max-width: 768px) {
-    .imagesContainer {
-      grid-template-columns: 1fr;
-    }
-    
-    .imageWrapper {
-      height: 200px;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .card {
-      padding: 0.75rem;
-    }
-    
-    .imageWrapper {
-      height: 160px;
-    }
-  }
+}
