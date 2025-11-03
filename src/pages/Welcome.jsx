@@ -108,16 +108,6 @@ function Welcome() {
         </div>
       </div>
 
-      <div className={styles.footer}>
-        <p>Start your culinary journey today! 🌟</p>
-        <button
-          className={styles.primaryBtn}
-          onClick={() => setShowSignUp(true)}
-        >
-          Create Free Account
-        </button>
-      </div>
-
       {showSignIn && <SignInModal onClose={() => setShowSignIn(false)} />}
       {showSignUp && <SignUpModal onClose={() => setShowSignUp(false)} />}
     </div>

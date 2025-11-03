@@ -1,9 +1,19 @@
 import { useState, useEffect, useMemo } from "react";
-import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, addDoc, query, where } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  deleteDoc,
+  collection,
+  getDocs,
+  addDoc,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../hooks/useAuth";
 import { DayPicker } from "react-day-picker";
-import { getISOWeekYear, getISOWeek } from 'date-fns';
+import { getISOWeekYear, getISOWeek } from "date-fns";
 import DailyMealPlan from "../components/DailyMealPlan";
 import WeeklyStats from "../components/WeeklyStats";
 import MealDetails from "../components/MealDetails";
@@ -13,10 +23,17 @@ import "react-day-picker/style.css";
 import styles from "../css/dashboard/Dashboard.module.css";
 
 const getDay = (date) => {
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
   return days[date.getDay()];
 };
-
 
 function Dashboard() {
   const [selected, setSelected] = useState(new Date());
@@ -38,7 +55,7 @@ function Dashboard() {
         const likedRef = collection(db, "users", currentUser.uid, "liked");
         const q = query(likedRef, where("name", "==", mealData.name));
         const querySnapshot = await getDocs(q);
-        
+
         const deletePromises = []; // for duplicated names
         querySnapshot.forEach((docSnapshot) => {
           deletePromises.push(deleteDoc(docSnapshot.ref));
@@ -47,26 +64,32 @@ function Dashboard() {
 
         const selectedDay = dayName || getDay(selected);
         const weekPlanKeys = Object.keys(data.weekPlan || {});
-        const dayKey = weekPlanKeys.find(key =>
-          key.toLowerCase() === selectedDay.toLowerCase()
+        const dayKey = weekPlanKeys.find(
+          (key) => key.toLowerCase() === selectedDay.toLowerCase()
         );
-        
+
         if (dayKey && data.weekPlan[dayKey]?.[mealType]) {
-          const planRef = doc(db, "users", currentUser.uid, "mealPlans", documentId);
+          const planRef = doc(
+            db,
+            "users",
+            currentUser.uid,
+            "mealPlans",
+            documentId
+          );
           const updPlan = { ...data.weekPlan };
           updPlan[dayKey] = {
             ...updPlan[dayKey],
             [mealType]: {
               ...updPlan[dayKey][mealType],
-              liked: false
-            }
+              liked: false,
+            },
           };
           await setDoc(planRef, { weekPlan: updPlan }, { merge: true });
-          
+
           setData({ ...data, weekPlan: updPlan });
         }
 
-        setLiked(prev => {
+        setLiked((prev) => {
           const newSet = new Set(prev);
           newSet.delete(mealData.name);
           return newSet;
@@ -74,34 +97,41 @@ function Dashboard() {
       } else {
         const likedRef = collection(db, "users", currentUser.uid, "liked");
         await addDoc(likedRef, {
-          name: mealData.name,
-          description: mealData.description,
+          ...mealData, // Store the entire meal object
           mealType,
-          createdAt: new Date()
+          weekId: documentId, // Reference to the week
+          dayName: dayName || getDay(selected), // Which day
+          createdAt: new Date(),
         });
 
         const selectedDay = dayName || getDay(selected);
         const weekPlanKeys = Object.keys(data.weekPlan || {});
-        const dayKey = weekPlanKeys.find(key =>
-          key.toLowerCase() === selectedDay.toLowerCase()
+        const dayKey = weekPlanKeys.find(
+          (key) => key.toLowerCase() === selectedDay.toLowerCase()
         );
-        
+
         if (dayKey && data.weekPlan[dayKey]?.[mealType]) {
-          const planRef = doc(db, "users", currentUser.uid, "mealPlans", documentId);
+          const planRef = doc(
+            db,
+            "users",
+            currentUser.uid,
+            "mealPlans",
+            documentId
+          );
           const updPlan = { ...data.weekPlan };
           updPlan[dayKey] = {
             ...updPlan[dayKey],
             [mealType]: {
               ...updPlan[dayKey][mealType],
-              liked: true
-            }
+              liked: true,
+            },
           };
           await setDoc(planRef, { weekPlan: updPlan }, { merge: true });
-          
+
           setData({ ...data, weekPlan: updPlan });
         }
 
-        setLiked(prev => new Set(prev).add(mealData.name));
+        setLiked((prev) => new Set(prev).add(mealData.name));
       }
     } catch (err) {
       console.error("Error toggling like:", err);
@@ -132,17 +162,23 @@ function Dashboard() {
     try {
       const selectedDay = getDay(selected);
       const weekPlanKeys = Object.keys(data.weekPlan);
-      const dayKey = weekPlanKeys.find(key =>
-        key.toLowerCase() === selectedDay.toLowerCase()
+      const dayKey = weekPlanKeys.find(
+        (key) => key.toLowerCase() === selectedDay.toLowerCase()
       );
 
       if (!dayKey) return;
 
-      const planRef = doc(db, "users", currentUser.uid, "mealPlans", documentId);
+      const planRef = doc(
+        db,
+        "users",
+        currentUser.uid,
+        "mealPlans",
+        documentId
+      );
       const updatedPlan = { ...data.weekPlan };
       updatedPlan[dayKey] = {
         ...updatedPlan[dayKey],
-        [selectedMeal.mealType]: updatedMeal
+        [selectedMeal.mealType]: updatedMeal,
       };
 
       await setDoc(planRef, { weekPlan: updatedPlan }, { merge: true });
@@ -151,7 +187,7 @@ function Dashboard() {
 
       setSelectedMeal({
         mealType: selectedMeal.mealType,
-        mealData: updatedMeal
+        mealData: updatedMeal,
       });
     } catch (err) {
       console.error("Error updating meal:", err);
@@ -174,7 +210,13 @@ function Dashboard() {
       setError(null);
 
       try {
-        const docRef = doc(db, "users", currentUser.uid, "mealPlans", documentId);
+        const docRef = doc(
+          db,
+          "users",
+          currentUser.uid,
+          "mealPlans",
+          documentId
+        );
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -204,14 +246,14 @@ function Dashboard() {
         const likedRef = collection(db, "users", currentUser.uid, "liked");
         const likedSnap = await getDocs(likedRef);
         const likedNames = new Set();
-        
+
         likedSnap.forEach((doc) => {
           const likedData = doc.data();
           if (likedData.name) {
             likedNames.add(likedData.name);
           }
         });
-        
+
         setLiked(likedNames);
       } catch (err) {
         console.error("Error fetching liked meals:", err);
@@ -221,10 +263,9 @@ function Dashboard() {
     fetchLikedMeals();
   }, [currentUser, data?.weekPlan]);
 
-
   return (
     <div className={styles.dashboardContainer}>
-      <div className={`${styles.mainDash} ${showChat ? styles.centered : ''}`}>
+      <div className={`${styles.mainDash} ${showChat ? styles.centered : ""}`}>
         <div>
           {showChat && selectedMeal ? (
             <SmallChat
@@ -255,37 +296,45 @@ function Dashboard() {
           {!loading && !error && (
             <div>
               {!data || !data.weekPlan ? (
-                 <DailyMealPlan dayName={null} dayMeals={null} />
-              ) : (() => {
-                const selectedDay = getDay(selected);
-                const weekPlanKeys = Object.keys(data.weekPlan);
-                const dayKey = weekPlanKeys.find(key =>
-                  key.toLowerCase() === selectedDay.toLowerCase()
-                );
+                <DailyMealPlan dayName={null} dayMeals={null} />
+              ) : (
+                (() => {
+                  const selectedDay = getDay(selected);
+                  const weekPlanKeys = Object.keys(data.weekPlan);
+                  const dayKey = weekPlanKeys.find(
+                    (key) => key.toLowerCase() === selectedDay.toLowerCase()
+                  );
 
-                const dayMeals = dayKey ? data.weekPlan[dayKey] : null;
+                  const dayMeals = dayKey ? data.weekPlan[dayKey] : null;
 
-                return (
-                  <>
-                  {selectedMeal ? (
-                    <MealDetails
-                      mealType={selectedMeal.mealType}
-                      mealData={selectedMeal.mealData}
-                      onClose={handleCloseMealDetails}
-                      onDislike={handleDislike}
-                      onLike={(mealType, mealData) => handleLike(mealType, mealData, selectedDay)}
-                      isLiked={selectedMeal.mealData?.name ? likedMeals.has(selectedMeal.mealData.name) : false}
-                    />
-                  ) : (
-                    <DailyMealPlan 
-                      dayName={selectedDay} 
-                      dayMeals={dayMeals} 
-                      onClick={handleClick}
-                    />
-                  )}
-                  </>
-                );
-              })()}
+                  return (
+                    <>
+                      {selectedMeal ? (
+                        <MealDetails
+                          mealType={selectedMeal.mealType}
+                          mealData={selectedMeal.mealData}
+                          onClose={handleCloseMealDetails}
+                          onDislike={handleDislike}
+                          onLike={(mealType, mealData) =>
+                            handleLike(mealType, mealData, selectedDay)
+                          }
+                          isLiked={
+                            selectedMeal.mealData?.name
+                              ? likedMeals.has(selectedMeal.mealData.name)
+                              : false
+                          }
+                        />
+                      ) : (
+                        <DailyMealPlan
+                          dayName={selectedDay}
+                          dayMeals={dayMeals}
+                          onClick={handleClick}
+                        />
+                      )}
+                    </>
+                  );
+                })()
+              )}
             </div>
           )}
         </div>
