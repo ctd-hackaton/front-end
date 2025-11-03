@@ -166,21 +166,22 @@ function Home() {
           </div>
         )}
         {/* Shopping List - Top Right */}
-        {homeSettings.shoppingList &&
-          (!data?.weekPlan ? (
-            <p>Loading...</p>
-          ) : (
-            <ShoppingListCard
-              initialItems={weekIngredients.map((i, idx) => ({
-                id: idx + 1,
-                name: `${i.item} (${Math.round(i.amount * 100) / 100} ${
-                  i.unit
-                })`,
-                checked: false,
-                category: i.category,
-              }))}
-            />
-          ))}
+        {homeSettings.shoppingList && (
+          <ShoppingListCard
+            initialItems={
+              data?.weekPlan
+                ? weekIngredients.map((i, idx) => ({
+                    id: idx + 1,
+                    name: `${i.item} (${Math.round(i.amount * 100) / 100} ${
+                      i.unit
+                    })`,
+                    checked: false,
+                    category: i.category,
+                  }))
+                : []
+            }
+          />
+        )}
         {/* Statistics Section - Bottom Left */}
         {homeSettings.statistics && (
           <div>

@@ -162,6 +162,13 @@ export default function ShoppingListCard({ initialItems }) {
 
       {isLoading ? (
         <div className={styles.loading}>Loading...</div>
+      ) : items.length === 0 ? (
+        <div className={styles.emptyState}>
+          <p className={styles.emptyMessage}>No items in your shopping list</p>
+          <p className={styles.emptyHint}>
+            Create a meal plan to generate your shopping list
+          </p>
+        </div>
       ) : (
         <div className={styles.list}>
           {Object.entries(groupedItems).map(([category, categoryItems]) => {

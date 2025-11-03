@@ -98,8 +98,27 @@
   text-align: right;
 }
 
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  flex: 1;
+}
+
 .noMeals {
   text-align: center;
-  color: var(--muted-text);
+  color: var(--text);
   padding: var(--container-gap);
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+}
+
+.noMealsHint {
+  color: var(--muted-text);
+  font-size: 0.875rem;
+  margin: 0;
+  text-align: center;
 }
