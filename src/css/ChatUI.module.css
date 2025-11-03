@@ -15,6 +15,25 @@
   box-sizing: border-box;
 }
 
+/* Fixed sizing for Julie (in Dashboard) */
+.julieChat {
+  width: 400px;
+  max-width: 400px;
+  height: calc(100vh - 120px);
+  max-height: calc(100vh - 120px);
+  margin: 0;
+  padding: 1rem;
+}
+
+.julieChat h1 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.julieChat .info {
+  font-size: 0.75rem;
+}
+
 .headerRow {
   display: flex;
   justify-content: space-between;

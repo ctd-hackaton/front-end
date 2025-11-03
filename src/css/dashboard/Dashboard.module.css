@@ -4,6 +4,24 @@
   flex-direction: column;
   gap: 2rem;
   width: 100%;
+  max-width: 100vw;
+  position: relative;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.chatOverlay {
+  position: fixed;
+  top: 80px;
+  left: 24px;
+  z-index: 1000;
+  width: 400px;
+  max-height: calc(100vh - 120px);
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
 }
 
 .mainDash {
@@ -12,7 +30,32 @@
   align-items: start;
   justify-content: space-between;
   width: 100%;
+  max-width: 100%;
   gap: 2rem;
+  transition: margin-left 0.3s ease;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.mainDash.withChat {
+  margin-left: 424px;
+  width: calc(100% - 424px);
+  max-width: calc(100vw - 448px);
+}
+
+.leftPanel {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.rightPanel {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .mainDash.centered {

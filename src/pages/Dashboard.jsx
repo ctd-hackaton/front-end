@@ -265,17 +265,22 @@ function Dashboard() {
 
   return (
     <div className={styles.dashboardContainer}>
-      <div className={`${styles.mainDash} ${showChat ? styles.centered : ""}`}>
-        <div>
-          {showChat && selectedMeal ? (
-            <SmallChat
-              week={documentId}
-              day={getDay(selected).toLowerCase()}
-              type={selectedMeal.mealType}
-              meal={selectedMeal.mealData}
-              onMealUpdate={handleMealUpdate}
-            />
-          ) : (
+      {/* Fixed Julie Chat Overlay */}
+      {showChat && selectedMeal && (
+        <div className={styles.chatOverlay}>
+          <SmallChat
+            week={documentId}
+            day={getDay(selected).toLowerCase()}
+            type={selectedMeal.mealType}
+            meal={selectedMeal.mealData}
+            onMealUpdate={handleMealUpdate}
+          />
+        </div>
+      )}
+
+      <div className={`${styles.mainDash} ${showChat ? styles.withChat : ""}`}>
+        {!showChat && (
+          <div className={styles.leftPanel}>
             <DayPicker
               showOutsideDays
               animate
@@ -287,10 +292,10 @@ function Dashboard() {
               showWeekNumber
               ISOWeek
             />
-          )}
-        </div>
+          </div>
+        )}
 
-        <div>
+        <div className={styles.rightPanel}>
           {loading && <p>Loading...</p>}
           {error && <p>Error</p>}
           {!loading && !error && (

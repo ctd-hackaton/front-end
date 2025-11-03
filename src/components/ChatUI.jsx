@@ -51,7 +51,7 @@ function ChatUI({
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [loading]);
+  }, [loading, isChefJul]);
   const handleSend = async () => {
     if (!message.trim()) {
       setError("Please enter a message");
@@ -129,7 +129,11 @@ function ChatUI({
   };
 
   return (
-    <div className={styles.chatContainer}>
+    <div
+      className={`${styles.chatContainer} ${
+        !isChefJul ? styles.julieChat : ""
+      }`}
+    >
       <div className={styles.headerRow}>
         <h1>{title}</h1>
         <div className={styles.info}>{info}</div>
