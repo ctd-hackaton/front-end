@@ -5,6 +5,80 @@
   margin: 0 auto;
 }
 
+/* Week Navigation */
+.weekNavigation {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto auto auto auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+}
+
+.weekLabel {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.currentWeekBadge {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-primary);
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.weekNavBtn {
+  background: var(--sec-bg);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+}
+
+.weekNavBtn:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  transform: scale(1.05);
+}
+
+.goToCurrentWeek {
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  justify-self: end;
+}
+
+.goToCurrentWeek:hover {
+  background: rgba(16, 185, 129, 0.9);
+  transform: scale(1.02);
+}
+
 /* Main Content */
 .mainContent {
   flex: 1;
@@ -27,35 +101,24 @@
   overflow: hidden;
 }
 
-/* Create Meal Plan Card - First Position Left */
-.gridContainer > div:nth-child(1) {
-  grid-column: 1;
+/* Week Navigation - spans full width at top */
+.weekNavigation {
+  grid-column: 1 / -1;
   grid-row: 1;
 }
 
-/* Meal Plan Section - Second Position (Top Right) */
+/* Create Meal Plan Card - Row 2, Left */
 .gridContainer > div:nth-child(2) {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+/* Meal Plan Section - Row 2, Right */
+.gridContainer > div:nth-child(3) {
   grid-column: 2;
-  grid-row: 1;
+  grid-row: 2;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  display: flex;
-  align-items: stretch;
-}
-
-.gridContainer > div:nth-child(2) > div {
-  width: 100%;
-}
-
-.gridContainer > div:nth-child(2):hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-}
-
-/* Shopping List - Left side spanning 2 rows */
-.gridContainer > div:nth-child(3) {
-  grid-column: 1;
-  grid-row: 2 / 4;
   display: flex;
   align-items: stretch;
 }
@@ -64,40 +127,57 @@
   width: 100%;
 }
 
-/* Statistics Section - Right side row 2 */
+.gridContainer > div:nth-child(3):hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Shopping List - Left side spanning rows 3-4 */
 .gridContainer > div:nth-child(4) {
+  grid-column: 1;
+  grid-row: 3 / 5;
+  display: flex;
+  align-items: stretch;
+}
+
+.gridContainer > div:nth-child(4) > div {
+  width: 100%;
+}
+
+/* Statistics Section - Right side row 3 */
+.gridContainer > div:nth-child(5) {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 3;
   display: flex;
   align-items: flex-start;
 }
 
-.gridContainer > div:nth-child(4) > div {
+.gridContainer > div:nth-child(5) > div {
   width: 100%;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.gridContainer > div:nth-child(4) > div:hover {
+.gridContainer > div:nth-child(5) > div:hover {
   transform: translateY(-4px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
-/* Saved Recipes Section - Right side row 3 (under statistics) */
-.gridContainer > div:nth-child(5) {
+/* Saved Recipes Section - Right side row 4 (under statistics) */
+.gridContainer > div:nth-child(6) {
   grid-column: 2;
-  grid-row: 3;
+  grid-row: 4;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   align-items: stretch;
 }
 
-.gridContainer > div:nth-child(5) > div {
+.gridContainer > div:nth-child(6) > div {
   width: 100%;
 }
 
-.gridContainer > div:nth-child(5):hover {
+.gridContainer > div:nth-child(6):hover {
   transform: translateY(-4px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
@@ -105,7 +185,7 @@
 /* Edit Home Button */
 .editHomeBtn {
   grid-column: 1 / -1;
-  grid-row: 4;
+  grid-row: 5;
   justify-self: end;
   padding: 1rem 1.5rem;
   background-color: var(--color-primary);

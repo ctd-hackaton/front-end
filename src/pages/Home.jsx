@@ -52,6 +52,12 @@ function Home() {
   const [error, setError] = useState(null);
   const [userGoals, setUserGoals] = useState(null);
 
+  // Week navigation state - default to current week
+  const currentWeekId = `${getISOWeekYear(new Date())}-W${getISOWeek(
+    new Date()
+  )}`;
+  const [selectedWeek, setSelectedWeek] = useState(currentWeekId);
+
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
@@ -73,7 +79,39 @@ function Home() {
   //   { name: 'Berries', quantity: '200 g' },
   //   { name: 'Olive oil', quantity: '250 ml' }
   // ];
-  const documentId = `${getISOWeekYear(new Date())}-W${getISOWeek(new Date())}`;
+
+  const documentId = selectedWeek;
+
+  // Week navigation handlers
+  const goToPreviousWeek = () => {
+    const [year, week] = selectedWeek.split("-W").map(Number);
+    let newWeek = week - 1;
+    let newYear = year;
+
+    if (newWeek < 1) {
+      newYear -= 1;
+      newWeek = 52; // Simplified - actual last week varies
+    }
+
+    setSelectedWeek(`${newYear}-W${String(newWeek).padStart(2, "0")}`);
+  };
+
+  const goToNextWeek = () => {
+    const [year, week] = selectedWeek.split("-W").map(Number);
+    let newWeek = week + 1;
+    let newYear = year;
+
+    if (newWeek > 52) {
+      newYear += 1;
+      newWeek = 1;
+    }
+
+    setSelectedWeek(`${newYear}-W${String(newWeek).padStart(2, "0")}`);
+  };
+
+  const goToCurrentWeek = () => {
+    setSelectedWeek(currentWeekId);
+  };
 
   // Fetch meal plan data
   useEffect(() => {
@@ -147,6 +185,36 @@ function Home() {
     <div className={styles.homePage}>
       {/* Main Content */}
       <div className={styles.gridContainer}>
+        {/* Week Navigation */}
+        <div className={styles.weekNavigation}>
+          <button
+            className={styles.weekNavBtn}
+            onClick={goToPreviousWeek}
+            title="Previous week"
+          >
+            ←
+          </button>
+          <span className={styles.weekLabel}>{selectedWeek}</span>
+          <button
+            className={styles.weekNavBtn}
+            onClick={goToNextWeek}
+            title="Next week"
+          >
+            →
+          </button>
+          {selectedWeek === currentWeekId && (
+            <span className={styles.currentWeekBadge}>(Current)</span>
+          )}
+          {selectedWeek !== currentWeekId && (
+            <button
+              className={styles.goToCurrentWeek}
+              onClick={goToCurrentWeek}
+            >
+              Go to Current Week
+            </button>
+          )}
+        </div>
+
         {/* Create Meal Plan Card - First Position Left */}
         {homeSettings.createMealPlan && (
           <div>
