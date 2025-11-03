@@ -179,7 +179,7 @@ function Header() {
               className={styles.profileButton}
               onClick={() => setDropdownOpen((prev) => !prev)}
             >
-              <User size={32} strokeWidth={1.5} color="white" />
+              <User size={24} strokeWidth={2} color="white" />
             </button>
             {dropdownOpen && (
               <div

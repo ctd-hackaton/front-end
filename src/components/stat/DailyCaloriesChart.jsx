@@ -65,7 +65,7 @@ export function DailyCaloriesChart({ data }) {
       .attr("x", width - 5)
       .attr("y", yScale(targetValue) - 5)
       .attr("text-anchor", "end")
-      .style("fill", "var(--text-muted)")
+      .style("fill", "#e6eef6")
       .style("font-size", "12px")
       .text(`Target: ${targetValue} kcal`);
 
@@ -130,29 +130,30 @@ export function DailyCaloriesChart({ data }) {
       .append("rect")
       .attr("rx", 8)
       .attr("ry", 8)
-      .attr("fill", "var(--surface-dark)")
-      .attr("stroke", "var(--primary-green)")
+      .attr("fill", "#1a222f")
+      .attr("stroke","#10b981")
       .attr("stroke-width", 2)
-      .style("filter", "drop-shadow(0 4px 6px rgba(0,0,0,0.3))");
+      .style("filter", "drop-shadow(0 4px 6px rgba(14, 13, 13, 0.3))");
 
     // Tooltip text elements
     const tooltipDay = tooltipGroup
       .append("text")
       .attr("class", "tooltip-day")
-      .style("fill", "var(--text-primary)")
+      .style("fill", "#e6eef6")
       .style("font-weight", "600")
       .style("font-size", "14px");
 
     const tooltipCalories = tooltipGroup
       .append("text")
       .attr("class", "tooltip-calories")
+      .attr("fill", "#e6eef6")
       .style("font-weight", "600")
       .style("font-size", "16px");
 
     const tooltipTarget = tooltipGroup
       .append("text")
       .attr("class", "tooltip-target")
-      .style("fill", "var(--text-muted)")
+      .style("fill", "#e6eef6")
       .style("font-size", "12px");
 
     // Dots
@@ -175,7 +176,7 @@ export function DailyCaloriesChart({ data }) {
           .text(`${d.calories} kcal`)
           .style(
             "fill",
-            isOverTarget ? "var(--danger)" : "var(--primary-green)"
+            isOverTarget ? "#ef4444" : "#10b981"
           );
         tooltipTarget.text(`Target: ${d.target} kcal`);
 
