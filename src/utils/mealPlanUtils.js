@@ -40,7 +40,6 @@ export const calculateDayNutrition = (dayMeals, goals = null) => {
  */
 export const collectDayIngredients = (dayMeals) => {
   if (!dayMeals || typeof dayMeals !== "object") return [];
-
   const ingredients = [];
   Object.values(dayMeals).forEach((meal) => {
     if (Array.isArray(meal.ingredients)) {
@@ -52,8 +51,29 @@ export const collectDayIngredients = (dayMeals) => {
       });
     }
   });
-
   return ingredients;
+};
+
+export const collectDayIngredientsSorted = (dayMeals) => {
+  if (!dayMeals || typeof dayMeals !== "object") return [];
+
+  const countMap = {};
+
+  Object.values(dayMeals).forEach((meal) => {
+    if (Array.isArray(meal.ingredients)) {
+      meal.ingredients.forEach((ing) => {
+        const key = ing.item?.trim();
+        if (!key) return;
+        countMap[key] = (countMap[key] || 0) + 1;
+      });
+    }
+  });
+
+  const sorted = Object.entries(countMap)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count); 
+
+  return sorted;
 };
 
 
@@ -147,6 +167,32 @@ export const buildGoalsArray = (nutrition, goals) => {
   ];
 };
 
+/**
+ * aggregated ingredients for the whole week
+ */
+export const getWeeklyIngredientsSorted = (weekPlan) => {
+  if (!weekPlan || typeof weekPlan !== "object") return [];
+
+  const ingredientSet = new Set();
+  const countMap = {};
+  
+  Object.values(weekPlan).forEach(dayMeals => {
+    if (!dayMeals) return;
+    Object.values(dayMeals).forEach(meal => {
+      if (!meal.ingredients) return;
+      meal.ingredients.forEach(ing => {
+        const name = ing.item?.trim().toLowerCase(); 
+        if (!name) return;
+        countMap[name] = (countMap[name] || 0) + 1;
+      });
+    });
+  });
+
+  return Object.entries(countMap)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count); 
+};
+
 
 /**
  * ingredients for today
@@ -164,4 +210,29 @@ export const getTodayIngredients = (weekPlan) => {
 
   const dayMeals = dayKey ? weekPlan[dayKey] : null;
   return collectDayIngredients(dayMeals);
+};
+
+/**
+ * Format data for DailyCaloriesChart component
+ */
+export const formatChartData = (weeklyData) => {
+  if (!Array.isArray(weeklyData) || weeklyData.length === 0) {
+    return [];
+  }
+
+  const dayAbbreviations = {
+    "Monday": "Mon",
+    "Tuesday": "Tue",
+    "Wednesday": "Wed",
+    "Thursday": "Thu",
+    "Friday": "Fri",
+    "Saturday": "Sat",
+    "Sunday": "Sun"
+  };
+
+  return weeklyData.map((dayData) => ({
+    day: dayAbbreviations[dayData.day] || dayData.day.substring(0, 3),
+    calories: Math.round(dayData.nutrition.calories || 0),
+    target: dayData.nutrition.caloriesGoal || 0
+  }));
 };
