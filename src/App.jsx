@@ -11,6 +11,7 @@ import "./App.css";
 import SmallChat from "./pages/SmallChat";
 import Userinfo from "./pages/Userinfo";
 import Statistics from "./pages/Statistics";
+import LandingPage from "./pages/LandingPage";
 
 function AppLayout() {
   return (
@@ -27,7 +28,15 @@ function App() {
       path: "/",
       element: <AppLayout />,
       children: [
-        { index: true, element: <Home /> },
+        { index: true, element: <LandingPage /> },
+        {
+          path: "home",
+          element: (
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          ),
+        },
         {
           path: "dashboard",
           element: (
@@ -44,15 +53,6 @@ function App() {
             </ProtectedRoute>
           ),
           loader: chatLoader,
-        },
-        // DELETEME:
-        {
-          path: "smallChat",
-          element: (
-            <ProtectedRoute>
-              <SmallChat />
-            </ProtectedRoute>
-          ),
         },
         {
           path: "/profile",

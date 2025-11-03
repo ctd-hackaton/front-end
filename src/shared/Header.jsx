@@ -142,7 +142,7 @@ function Header() {
         {currentUser && (
           <div className={styles.headerNavLinks}>
             <NavLink
-              to="/"
+              to="/home"
               className={({ isActive }) =>
                 isActive
                   ? `${styles.navLink} ${styles.navLinkActiveHome}`
@@ -206,9 +206,19 @@ function Header() {
             )}
           </div>
         ) : (
-          <div>
-            <button onClick={() => setShowSignIn(true)}>Sign In</button>
-            <button onClick={() => setShowSignUp(true)}>Sign Up</button>
+          <div className={styles.authButtons}>
+            <button
+              className={styles.signInBtn}
+              onClick={() => setShowSignIn(true)}
+            >
+              Sign In
+            </button>
+            <button
+              className={styles.signUpBtn}
+              onClick={() => setShowSignUp(true)}
+            >
+              Sign Up
+            </button>
           </div>
         )}
       </nav>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import styles from "../css/ChatUI.module.css";
 
 const funLoadingMessages = [
@@ -31,10 +32,15 @@ function ChatUI({
   );
   const inputRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const location = useLocation();
 
-  // Rotate through fun loading messages while Chef is thinking
+  // Check if this is Chef Jul (shows fun messages) or Julie (shows dots)
+  // Julie lives in /dashboard, Chef Jul is elsewhere
+  const isChefJul = !location.pathname.includes("/dashboard");
+
+  // Rotate through fun loading messages while Chef Jul is thinking
   useEffect(() => {
-    if (!loading) return;
+    if (!loading || !isChefJul) return;
 
     const interval = setInterval(() => {
       setChefThinkingMessage(
@@ -66,7 +72,11 @@ function ChatUI({
       let isStreaming = false;
 
       const onMessageUpdate = (partialText) => {
-        isStreaming = true;
+        if (!isStreaming) {
+          isStreaming = true;
+          // Hide "Thinking..." as soon as first chunk arrives
+          setLoading(false);
+        }
         setMessages((m) => {
           const existing = m.find((msg) => msg.id === streamingMsgId);
           if (existing) {
@@ -86,6 +96,7 @@ function ChatUI({
       // If not streaming, add the final message
       if (!isStreaming && assistantMsg) {
         setMessages((m) => [...m, assistantMsg]);
+        setLoading(false);
       } else if (isStreaming && assistantMsg) {
         // Final update to ensure we have the complete message
         setMessages((m) =>
@@ -95,11 +106,11 @@ function ChatUI({
               : msg
           )
         );
+        // Loading already set to false when streaming started
       }
     } catch (err) {
       console.error("Error sending message:", err);
       setError(err.message || "Failed to send message");
-    } finally {
       setLoading(false);
     }
   };
@@ -143,7 +154,7 @@ function ChatUI({
           <div className={styles.messageAssistant}>
             <div className={styles.messageText}>
               <span className={styles.thinkingMessage}>
-                {chefThinkingMessage}
+                {isChefJul ? chefThinkingMessage : "Thinking..."}
               </span>
             </div>
           </div>
