@@ -266,15 +266,6 @@ export default function Statistics() {
             ))}
         </div>
       </section>
-      <div className={styles.insightFooter}>
-        <div className={styles.insightInner}>
-          <span className={styles.insightIcon}>💡</span>
-          <div>
-            <h4 className={styles.insightTitle}>AI Insight from Julie</h4>
-            <p className={styles.insightText}>{text}</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
