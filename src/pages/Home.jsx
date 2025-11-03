@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useState, useEffect, useMemo, memo } from "react";
+import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "../hooks/useAuth";
 
 import DailyMealPlan from "../components/DailyMealPlan";
@@ -37,6 +37,7 @@ const getDay = (date) => {
 function Home() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [homeSettings, setHomeSettings] = useState({
@@ -74,6 +75,7 @@ function Home() {
   // ];
   const documentId = `${getISOWeekYear(new Date())}-W${getISOWeek(new Date())}`;
 
+  // Fetch meal plan data
   useEffect(() => {
     if (!currentUser) return;
 
@@ -102,8 +104,9 @@ function Home() {
     };
 
     fetchData();
-  }, [currentUser]);
+  }, [currentUser, documentId, location.state?.refetch]);
 
+  // Fetch user goals
   useEffect(() => {
     if (!currentUser) return;
 
@@ -289,4 +292,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default memo(Home);

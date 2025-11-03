@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../hooks/useAuth";
@@ -140,4 +140,4 @@ const FavoriteRecipes = () => {
   );
 };
 
-export default FavoriteRecipes;
+export default memo(FavoriteRecipes);

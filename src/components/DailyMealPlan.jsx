@@ -1,3 +1,4 @@
+import { memo } from "react";
 import styles from "../css/dashboard/DailyMealPlan.module.css";
 
 function DailyMealPlan({ dayName, dayMeals, onClick }) {
@@ -61,4 +62,4 @@ function DailyMealPlan({ dayName, dayMeals, onClick }) {
   );
 }
 
-export default DailyMealPlan;
+export default memo(DailyMealPlan);

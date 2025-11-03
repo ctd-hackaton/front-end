@@ -1,12 +1,12 @@
 import { ShoppingCart, ChevronDown, ChevronRight } from "lucide-react";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, memo } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../hooks/useAuth";
 import { getISOWeekYear, getISOWeek } from "date-fns";
 import styles from "../css/home/ShoppingListCard.module.css";
 
-export default function ShoppingListCard({ initialItems }) {
+function ShoppingListCard({ initialItems }) {
   const { currentUser } = useAuth();
   const [items, setItems] = useState(
     initialItems || [
@@ -218,3 +218,5 @@ export default function ShoppingListCard({ initialItems }) {
     </div>
   );
 }
+
+export default memo(ShoppingListCard);

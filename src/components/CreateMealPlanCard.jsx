@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChefHat } from "lucide-react";
 import styles from "../css/home/CreateMealPlanCard.module.css";
@@ -19,4 +20,4 @@ function CreateMealPlanCard() {
   );
 }
 
-export default CreateMealPlanCard;
+export default memo(CreateMealPlanCard);
