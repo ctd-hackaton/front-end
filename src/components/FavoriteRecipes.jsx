@@ -68,9 +68,6 @@ const FavoriteRecipes = () => {
     );
   }
 
-  // Show first 2 recipes
-  const displayRecipes = likedRecipes.slice(0, 2);
-
   return (
     <div className={styles.card}>
       <div className={styles.header}>
@@ -80,7 +77,7 @@ const FavoriteRecipes = () => {
       </div>
 
       <div className={styles.imagesContainer}>
-        {displayRecipes.map((recipe) => (
+        {likedRecipes.map((recipe) => (
           <div key={recipe.id} className={styles.imageCard}>
             {recipe.imageUrl ? (
               <div className={styles.imageWrapper}>
@@ -107,6 +104,9 @@ const FavoriteRecipes = () => {
               <h3 className={styles.imageTitle}>
                 {recipe.name || "Untitled Recipe"}
               </h3>
+              {recipe.description && (
+                <p className={styles.description}>{recipe.description}</p>
+              )}
               {recipe.nutrition ? (
                 <div className={styles.macros}>
                   <span className={styles.macro}>
@@ -135,12 +135,6 @@ const FavoriteRecipes = () => {
             </div>
           </div>
         ))}
-
-        {likedRecipes.length > 2 && (
-          <div className={styles.moreRecipes}>
-            +{likedRecipes.length - 2} more
-          </div>
-        )}
       </div>
     </div>
   );

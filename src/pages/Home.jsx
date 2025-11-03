@@ -6,6 +6,7 @@ import DailyMealPlan from "../components/DailyMealPlan";
 import ShoppingListCard from "../components/ShoppingListCard";
 import FavoriteRecipes from "../components/FavoriteRecipes";
 import { GoalCard } from "../components/stat/GoalCard";
+import CreateMealPlanCard from "../components/CreateMealPlanCard";
 
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
@@ -39,6 +40,7 @@ function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [homeSettings, setHomeSettings] = useState({
+    createMealPlan: true,
     mealPlan: true,
     shoppingList: true,
     statistics: true,
@@ -142,6 +144,12 @@ function Home() {
     <div className={styles.homePage}>
       {/* Main Content */}
       <div className={styles.gridContainer}>
+        {/* Create Meal Plan Card - First Position Left */}
+        {homeSettings.createMealPlan && (
+          <div>
+            <CreateMealPlanCard />
+          </div>
+        )}
         {/* Meal Plan Section - Top Left */}
         {homeSettings.mealPlan && (
           <div onClick={() => navigate("/dashboard")}>
@@ -216,6 +224,17 @@ function Home() {
                 Choose the sections you want to see on your home screen.
               </p>
               <div className={styles.settingsList}>
+                <div className={styles.settingItem}>
+                  <span>Create Meal Plan</span>
+                  <label className={styles.switch}>
+                    <input
+                      type="checkbox"
+                      checked={homeSettings.createMealPlan}
+                      onChange={() => toggleSettingVisibility("createMealPlan")}
+                    />
+                    <span className={styles.slider}></span>
+                  </label>
+                </div>
                 <div className={styles.settingItem}>
                   <span>Meal Plan</span>
                   <label className={styles.switch}>

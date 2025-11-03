@@ -152,6 +152,14 @@ function Header() {
               Home
             </NavLink>
             <NavLink
+              to="/chat"
+              className={({ isActive }) =>
+                isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
+              }
+            >
+              Meal Planner
+            </NavLink>
+            <NavLink
               to="/dashboard"
               className={({ isActive }) =>
                 isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
