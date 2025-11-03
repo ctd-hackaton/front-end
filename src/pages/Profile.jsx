@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../hooks/useAuth";
-import styles from "../css/Profile.module.css";
 import { useNavigate } from "react-router-dom";
+import styles from "../css/Profile.module.css";
 
-//convertation
+// Conversion utils
 const lbToKg = (lb) => lb * 0.45359237;
 const kgToLb = (kg) => kg / 0.45359237;
 const cmToFeetInches = (cm) => {
@@ -17,14 +17,10 @@ const cmToFeetInches = (cm) => {
 const feetInchesToCm = (feet, inches) => (feet * 12 + inches) * 2.54;
 
 export default function Profile() {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
 
-  const [units, setUnits] = useState({
-    weight: "lb", 
-    height: "ft", 
-  });
-
+  const [units, setUnits] = useState({ weight: "lb", height: "ft" });
   const [formData, setFormData] = useState({
     age: "",
     weightKg: "",
@@ -43,7 +39,7 @@ export default function Profile() {
     fatsGoalGrams: "",
   });
 
-  // Подгружаем существующие данные
+  // Load existing user data
   useEffect(() => {
     if (!currentUser) return;
     const fetchData = async () => {
@@ -53,14 +49,10 @@ export default function Profile() {
         const data = docSnap.data();
         const weightKg = data.personalData?.weightKg || "";
         const heightCm = data.personalData?.heightCm || "";
-
         let weightDisplay = "";
         let heightFeet = "";
         let heightInches = "";
-
-        if (weightKg !== "") {
-          weightDisplay = kgToLb(Number(weightKg)).toFixed(1);
-        }
+        if (weightKg !== "") weightDisplay = kgToLb(Number(weightKg)).toFixed(1);
         if (heightCm !== "") {
           const { feet, inches } = cmToFeetInches(Number(heightCm));
           heightFeet = feet;
@@ -90,44 +82,20 @@ export default function Profile() {
 
   const handleUnitChange = (type, value) => {
     setUnits((prev) => ({ ...prev, [type]: value }));
-
     if (type === "weight") {
       if (value === "kg") {
-        setFormData((prev) => ({
-          ...prev,
-          weightDisplay: prev.weightKg,
-        }));
+        setFormData((prev) => ({ ...prev, weightDisplay: prev.weightKg }));
       } else {
-        const lb = prev.weightKg ? kgToLb(Number(prev.weightKg)).toFixed(1) : "";
-        setFormData((prev) => ({
-          ...prev,
-          weightDisplay: lb,
-        }));
+        const lb = formData.weightKg ? kgToLb(Number(formData.weightKg)).toFixed(1) : "";
+        setFormData((prev) => ({ ...prev, weightDisplay: lb }));
       }
     }
-
     if (type === "height") {
       if (value === "cm") {
-        setFormData((prev) => ({
-          ...prev,
-          heightFeet: "",
-          heightInches: "",
-        }));
-      } else {
-        if (prev.heightCm) {
-          const { feet, inches } = cmToFeetInches(Number(prev.heightCm));
-          setFormData((prev) => ({
-            ...prev,
-            heightFeet: feet,
-            heightInches: inches,
-          }));
-        } else {
-          setFormData((prev) => ({
-            ...prev,
-            heightFeet: "",
-            heightInches: "",
-          }));
-        }
+        setFormData((prev) => ({ ...prev, heightFeet: "", heightInches: "" }));
+      } else if (formData.heightCm) {
+        const { feet, inches } = cmToFeetInches(Number(formData.heightCm));
+        setFormData((prev) => ({ ...prev, heightFeet: feet, heightInches: inches }));
       }
     }
   };
@@ -135,48 +103,32 @@ export default function Profile() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Weight conversion
     if (name === "weightDisplay") {
       const numValue = value === "" ? "" : Number(value);
-      if (units.weight === "kg") {
-        setFormData((prev) => ({
-          ...prev,
-          weightKg: numValue,
-        }));
-      } else {
-        // lb → kg
-        const kg = value === "" ? "" : lbToKg(numValue);
-        setFormData((prev) => ({
-          ...prev,
-          weightKg: kg,
-        }));
-      }
+      const kg = units.weight === "kg" ? numValue : lbToKg(numValue);
+      setFormData((prev) => ({ ...prev, weightKg: kg }));
     }
 
+    // Height conversion
     if (name === "heightFeet" || name === "heightInches") {
-      const feet = name === "heightFeet" ? (value === "" ? 0 : Number(value)) : Number(prev.heightFeet || 0);
-      const inches = name === "heightInches" ? (value === "" ? 0 : Number(value)) : Number(prev.heightInches || 0);
+      const feet = name === "heightFeet" ? Number(value || 0) : Number(formData.heightFeet || 0);
+      const inches = name === "heightInches" ? Number(value || 0) : Number(formData.heightInches || 0);
       const cm = feetInchesToCm(feet, inches);
-      setFormData((prev) => ({
-        ...prev,
-        heightCm: cm > 0 ? cm : "",
-      }));
+      setFormData((prev) => ({ ...prev, heightCm: cm > 0 ? cm : "" }));
     }
-
     if (name === "heightCm") {
-      const numValue = value === "" ? "" : Number(value);
-      setFormData((prev) => ({
-        ...prev,
-        heightCm: numValue,
-      }));
+      setFormData((prev) => ({ ...prev, heightCm: Number(value || 0) }));
     }
   };
 
-  const handleCheckbox = (cuisine) => {
+  const handleCheckbox = (field, value) => {
     setFormData((prev) => {
-      const current = prev.favoriteCuisine;
-      return current.includes(cuisine)
-        ? { ...prev, favoriteCuisine: current.filter((c) => c !== cuisine) }
-        : { ...prev, favoriteCuisine: [...current, cuisine] };
+      const current = prev[field];
+      return current.includes(value)
+        ? { ...prev, [field]: current.filter((v) => v !== value) }
+        : { ...prev, [field]: [...current, value] };
     });
   };
 
@@ -184,18 +136,18 @@ export default function Profile() {
     e.preventDefault();
     if (!currentUser) return alert("Please log in first");
     if (formData.weightKg < 0 || formData.heightCm < 0 || formData.age < 0) {
-      alert("Please enter valid non-negative numbers.");
-      return;
+      return alert("Please enter valid non-negative numbers.");
     }
+
     const userRef = doc(db, "users", currentUser.uid);
     const payload = {
       email: currentUser.email,
       displayName: currentUser.displayName || "User",
       createdAt: Timestamp.now(),
       personalData: {
-        age: formData.age ? Number(formData.age) : null,
-        weightKg: formData.weightKg ? Number(formData.weightKg) : null,
-        heightCm: formData.heightCm ? Number(formData.heightCm) : null,
+        age: Number(formData.age),
+        weightKg: Number(formData.weightKg),
+        heightCm: Number(formData.heightCm),
         activityLevel: formData.activityLevel,
       },
       preferences: {
@@ -219,7 +171,7 @@ export default function Profile() {
       alert("Data saved successfully!");
       navigate("/chat");
     } catch (err) {
-      console.error("Error saving user data:", err);
+      console.error(err);
       alert("Failed to save data");
     }
   };
@@ -228,12 +180,21 @@ export default function Profile() {
     <div className={styles.container}>
       <h2 className={styles.title}>User Questionnaire</h2>
       <form onSubmit={handleSubmit} className={styles.form}>
+        {/* Personal Data */}
         <section className={styles.section}>
           <h3>Personal Data</h3>
           <label>
             Age:
-            <input type="number" name="age" value={formData.age} onChange={handleChange} />
+            <input
+              type="number"
+              name="age"
+              min="0"
+              max="120"
+              value={formData.age}
+              onChange={handleChange}
+            />
           </label>
+
           <div className={styles.unitGroup}>
             <span>Weight:</span>
             <div className={styles.unitToggle}>
@@ -255,7 +216,8 @@ export default function Profile() {
             <input
               type="number"
               name="weightDisplay"
-              min="0"
+              min="30"
+              max="300"
               step={units.weight === "lb" ? "0.1" : "0.01"}
               value={formData.weightDisplay}
               onChange={handleChange}
@@ -305,7 +267,9 @@ export default function Profile() {
               <input
                 type="number"
                 name="heightCm"
-                min="0"
+                min="50"
+                max="300"
+                step="0.01"
                 value={formData.heightCm}
                 onChange={handleChange}
                 placeholder="Enter height in cm"
@@ -315,7 +279,11 @@ export default function Profile() {
 
           <label>
             Activity level:
-            <select name="activityLevel" value={formData.activityLevel} onChange={handleChange}>
+            <select
+              name="activityLevel"
+              value={formData.activityLevel}
+              onChange={handleChange}
+            >
               <option value="sedentary">Sedentary</option>
               <option value="light">Light</option>
               <option value="moderate">Moderate</option>
@@ -324,11 +292,16 @@ export default function Profile() {
           </label>
         </section>
 
+        {/* Preferences */}
         <section className={styles.section}>
           <h3>Preferences</h3>
           <label>
             Diet type:
-            <select name="dietType" value={formData.dietType} onChange={handleChange}>
+            <select
+              name="dietType"
+              value={formData.dietType}
+              onChange={handleChange}
+            >
               <option value="none">None</option>
               <option value="vegetarian">Vegetarian</option>
               <option value="vegan">Vegan</option>
@@ -346,18 +319,6 @@ export default function Profile() {
             </select>
           </label>
 
-          {/* <p>Favorite cuisine:</p>
-          {["italian", "mexican", "japanese", "indian"].map((cuisine) => (
-            <label key={cuisine} className={styles.checkbox}>
-              <input
-                type="checkbox"
-                checked={formData.favoriteCuisine.includes(cuisine)}
-                onChange={() => handleCheckbox(cuisine)}
-              />
-              {cuisine}
-            </label>
-          ))} */}
-
           <label>
             Excluded ingredients (comma-separated):
             <input
@@ -370,27 +331,31 @@ export default function Profile() {
           </label>
 
           <p>Allergies:</p>
-          {["Gluten", "Peanuts", "Tree Nuts", "Dairy", "Eggs", "Shellfish", "Wheat", "Soy", "Fish"].map(
-            (allergy) => (
+          <div className={styles.checkboxGroup}>
+            {[
+              "Gluten",
+              "Peanuts",
+              "Tree Nuts",
+              "Dairy",
+              "Eggs",
+              "Shellfish",
+              "Wheat",
+              "Soy",
+              "Fish",
+            ].map((allergy) => (
               <label key={allergy} className={styles.checkbox}>
                 <input
                   type="checkbox"
                   checked={formData.allergies.includes(allergy)}
-                  onChange={() =>
-                    setFormData((prev) => {
-                      const current = prev.allergies;
-                      return current.includes(allergy)
-                        ? { ...prev, allergies: current.filter((a) => a !== allergy) }
-                        : { ...prev, allergies: [...current, allergy] };
-                    })
-                  }
+                  onChange={() => handleCheckbox("allergies", allergy)}
                 />
                 {allergy}
               </label>
-            )
-          )}          
+            ))}
+          </div>
         </section>
 
+        {/* Goals */}
         <section className={styles.section}>
           <h3>Goals</h3>
           <label>
@@ -398,6 +363,8 @@ export default function Profile() {
             <input
               type="number"
               name="dailyCalorieTarget"
+              min="0"
+              max="10000"
               value={formData.dailyCalorieTarget}
               onChange={handleChange}
             />
@@ -407,6 +374,8 @@ export default function Profile() {
             <input
               type="number"
               name="proteinGoalGrams"
+              min="0"
+              max="1000"
               value={formData.proteinGoalGrams}
               onChange={handleChange}
             />
@@ -416,6 +385,8 @@ export default function Profile() {
             <input
               type="number"
               name="carbsGoalGrams"
+              min="0"
+              max="1000"
               value={formData.carbsGoalGrams}
               onChange={handleChange}
             />
@@ -425,6 +396,8 @@ export default function Profile() {
             <input
               type="number"
               name="fatsGoalGrams"
+              min="0"
+              max="500"
               value={formData.fatsGoalGrams}
               onChange={handleChange}
             />

@@ -1,80 +1,160 @@
+/* Основной контейнер */
 .container {
-    max-width: 800px;
-    margin: 80px auto;
-    padding: 2rem;
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  }
-  
-  .title {
-    font-size: 1.8rem;
-    margin-bottom: 1.5rem;
-    color: #111;
-  }
-  
-  .form {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
-  
-  .section {
-    border-top: 1px solid #e0e0e0;
-    padding-top: 1rem;
-  }
-  
-  label {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 0.8rem;
-    font-weight: 500;
-    color: #333;
-  }
-  
-  input, select {
-    padding: 0.6rem 0.8rem;
-    margin-top: 0.3rem;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 1rem;
-  }
-  
-  .checkbox {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .submitBtn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .submitBtn:hover {
-    background-color: #45a049;
-  }
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
+}
 
-  .checkboxGrid {
-    display: flex;
+/* Заголовки */
+.title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--color-primary);
+  text-align: center;
+}
+
+.section {
+  background-color: var(--sec-bg);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.section h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  color: var(--color-primary);
+}
+
+/* Лейблы и поля */
+label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+input[type="number"],
+input[type="text"],
+select {
+  padding: 0.4rem 0.6rem;
+  margin-top: 0.25rem;
+  border: 1px solid #374151; /* dark grey border */
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  background-color: var(--bg);
+  color: var(--text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+  outline: none;
+}
+
+/* Группы единиц */
+.unitGroup {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.unitToggle {
+  display: flex;
+  margin-bottom: 0.5rem;
+  gap: 0.25rem;
+}
+
+.unitToggle button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #374151;
+  background-color: #1a222f;
+  cursor: pointer;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.unitToggle button.activeUnit {
+  background-color: var(--color-primary-600);
+  color: #fff;
+  border-color: var(--color-primary-600);
+}
+
+/* Рост в ft/in */
+.heightInputs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.heightInputs input {
+  flex: 1;
+}
+
+/* Чекбоксы */
+.checkboxGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  font-weight: 400;
+  color: var(--text);
+}
+
+.checkbox input {
+  margin-right: 0.5rem;
+  accent-color: var(--color-primary);
+}
+
+/* Кнопка отправки */
+.submitBtn {
+  display: block;
+  width: 100%;
+  padding: 0.65rem;
+  background-color: var(--color-primary);
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 1rem;
+}
+
+.submitBtn:hover {
+  background-color: var(--color-primary-600);
+}
+
+/* Плейсхолдеры */
+::placeholder {
+  color: var(--muted-text);
+  opacity: 1;
+}
+
+/* Адаптивность */
+@media (max-width: 600px) {
+  .container {
+    padding: 1rem;
+  }
+  .heightInputs {
     flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
   }
-  
-  
-  @media (min-width: 768px) {
-    .checkboxGrid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 0.5rem;
-    }
-  }
-  
+}

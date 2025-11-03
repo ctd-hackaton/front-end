@@ -194,7 +194,6 @@
 
 /* Chart Card Styles */
 .chart-card {
-  background: var(--surface-dark);
   box-shadow: var(--shadow-md);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
@@ -212,7 +211,7 @@
 }
 
 .chart-subtitle {
-  color: var(--text-muted);
+  color: var(--text);
   font-size: var(--text-label);
   margin-bottom: 1.5rem;
 }
@@ -939,40 +938,6 @@
 
 .current {
   color: var(--color-primary);
-}
-
-/* Charts */
-.charts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-  gap: 1.5rem;
-}
-
-.chart-card {
-  background: var(--surface);
-  border: 1px solid var(--sec-bg);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-}
-
-.chart-card.full {
-  grid-column: 1 / -1;
-}
-
-.chart-title {
-  color: var(--text);
-  margin-bottom: 0.5rem;
-}
-
-.chart-subtitle {
-  color: var(--muted-text);
-  font-size: 0.875rem;
-  margin-bottom: 1.5rem;
-}
-
-.chart {
-  width: 100%;
-  height: 300px;
 }
 
 /* D3 styles */

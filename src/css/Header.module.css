@@ -151,7 +151,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   color: white;
-  fill: white;
+  padding: 0;
 }
 
 .profileButton:hover {
@@ -180,6 +180,14 @@
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
+}
+
+.profileButton svg {
+  display: block;
+  width: 60%;
+  height: 60%;
+  stroke: currentColor;
+  fill: currentColor;
 }
 
 .profileButton img {
