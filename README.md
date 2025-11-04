@@ -74,8 +74,6 @@ Here’s a quick visual walkthrough of the main pages:
 
 ---
 
----
-
 ## 🌟 Key Features  
 
 ### 👨‍🍳 AI Assistant – *Chef Jul*
